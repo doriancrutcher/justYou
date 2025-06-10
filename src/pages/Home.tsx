@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Typography, Card, CardContent, CardActions, Button, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { collection, getDocs, deleteDoc, doc, query, where, addDoc } from 'firebase/firestore';
@@ -38,12 +38,12 @@ const Home: React.FC = () => {
   const [savingCoverLetter, setSavingCoverLetter] = useState(false);
   const [coverLetterTitle, setCoverLetterTitle] = useState('');
 
-  const fetchCoverLetters = async () => {
+  const fetchCoverLetters = useCallback(async () => {
     if (!user) return;
     const q = query(collection(db, 'coverLetters'), where('userId', '==', user.uid));
     const querySnapshot = await getDocs(q);
     setCoverLetters(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-  };
+  }, [user]);
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -66,7 +66,7 @@ const Home: React.FC = () => {
 
     fetchStories();
     fetchCoverLetters();
-  }, [user]);
+  }, [user, fetchCoverLetters]);
 
   useEffect(() => {
     if (selectAll) {
