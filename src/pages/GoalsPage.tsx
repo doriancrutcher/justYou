@@ -25,7 +25,7 @@ interface GoalCategory {
 
 const GoalsPage: React.FC = () => {
   const { user } = useAuth();
-  const isOwner = user?.email === 'crutcherdorian@gmail.com';
+  const isOwner = user?.email === process.env.REACT_APP_ADMIN_EMAIL;
   const [categories, setCategories] = useState<GoalCategory[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newTask, setNewTask] = useState<{ [catId: string]: string }>({});
