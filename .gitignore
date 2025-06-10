@@ -23,3 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 claude-backend/.env
 claude-backend/.env
+.env
+claude-backend/.env
