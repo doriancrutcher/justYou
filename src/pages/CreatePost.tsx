@@ -70,10 +70,6 @@ const CreatePost: React.FC = () => {
     setCurrentPrompt(newPrompt);
   };
 
-  const handleUsePrompt = () => {
-    setContent(content ? content + '\n' + currentPrompt : currentPrompt);
-  };
-
   if (!user) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>

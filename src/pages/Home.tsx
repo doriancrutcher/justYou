@@ -38,24 +38,6 @@ const Home: React.FC = () => {
   const [savingCoverLetter, setSavingCoverLetter] = useState(false);
   const [coverLetterTitle, setCoverLetterTitle] = useState('');
 
-  const fetchStories = async () => {
-    setLoading(true);
-    try {
-      if (!user) return;
-      const q = query(collection(db, 'stories'), where('authorId', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      const storiesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Story[];
-      setStories(storiesData);
-    } catch (error) {
-      console.error('Error fetching stories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchCoverLetters = async () => {
     if (!user) return;
     const q = query(collection(db, 'coverLetters'), where('userId', '==', user.uid));
@@ -64,6 +46,24 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
+    const fetchStories = async () => {
+      setLoading(true);
+      try {
+        if (!user) return;
+        const q = query(collection(db, 'stories'), where('authorId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        const storiesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Story[];
+        setStories(storiesData);
+      } catch (error) {
+        console.error('Error fetching stories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchStories();
     fetchCoverLetters();
   }, [user]);

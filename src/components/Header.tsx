@@ -32,7 +32,7 @@ const Header: React.FC = () => {
                 letterSpacing: 1.5,
               }}
             >
-              JustYou
+              MyNarrative
             </Typography>
           </Box>
 

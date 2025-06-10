@@ -1,4 +1,8 @@
-# Getting Started with Create React App
+# MyNarrative
+
+MyNarrative is your personal vault for life stories and experiences. Create a collection of personalized stories—moments, memories, and reflections that matter to you. Use your story collection as a creative toolkit: generate cover letters, bios, or anything else you need, all based on your authentic experiences. No more scrambling to remember details or rewriting your story from scratch—your life's highlights are always at your fingertips.
+
+---
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
