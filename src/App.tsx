@@ -9,6 +9,7 @@ import ViewPost from './pages/ViewPost';
 import TodoList from './pages/TodoList';
 import EditPost from './pages/EditPost';
 import GoalsPage from './pages/GoalsPage';
+import About from './pages/About';
 import { AuthProvider } from './components/AuthContext';
 
 const theme = createTheme({
@@ -44,6 +45,7 @@ function App() {
             <Route path="/todos" element={<TodoList />} />
             <Route path="/edit/:id" element={<EditPost />} />
             <Route path="/goals" element={<GoalsPage />} />
+            <Route path="/about" element={<About />} />
           </Routes>
         </Router>
       </AuthProvider>

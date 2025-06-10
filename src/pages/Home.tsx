@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Card, CardContent, CardActions, Button, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, where, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../components/AuthContext';
 import Dialog from '@mui/material/Dialog';
@@ -34,6 +34,9 @@ const Home: React.FC = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [coverLetters, setCoverLetters] = useState<any[]>([]);
+  const [savingCoverLetter, setSavingCoverLetter] = useState(false);
+  const [coverLetterTitle, setCoverLetterTitle] = useState('');
 
   const fetchStories = async () => {
     setLoading(true);
@@ -53,8 +56,16 @@ const Home: React.FC = () => {
     }
   };
 
+  const fetchCoverLetters = async () => {
+    if (!user) return;
+    const q = query(collection(db, 'coverLetters'), where('userId', '==', user.uid));
+    const querySnapshot = await getDocs(q);
+    setCoverLetters(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+
   useEffect(() => {
     fetchStories();
+    fetchCoverLetters();
   }, [user]);
 
   useEffect(() => {
@@ -93,6 +104,31 @@ const Home: React.FC = () => {
     } catch (error) {
       console.error('Error deleting story:', error);
     }
+  };
+
+  const handleSaveCoverLetter = async () => {
+    if (!user || !coverLetterTitle.trim() || !coverLetter.trim()) return;
+    setSavingCoverLetter(true);
+    try {
+      await addDoc(collection(db, 'coverLetters'), {
+        userId: user.uid,
+        userEmail: user.email,
+        title: coverLetterTitle,
+        content: coverLetter,
+        jobDescription,
+        storyIds: selectedStoryIds,
+        createdAt: new Date(),
+      });
+      setCoverLetterTitle('');
+      setCoverLetter('');
+      setJobDescription('');
+      setSelectedStoryIds([]);
+      setCoverLetterOpen(false);
+      fetchCoverLetters();
+    } catch (err) {
+      alert('Error saving cover letter: ' + err);
+    }
+    setSavingCoverLetter(false);
   };
 
   return (
@@ -170,13 +206,28 @@ const Home: React.FC = () => {
           </Card>
         ))}
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      {/* Cover Letters Section */}
+      <Box sx={{ mt: 6 }}>
+        <Typography variant="h4" sx={{ mb: 2 }}>Cover Letters</Typography>
         {user && (
-          <Button variant="contained" color="primary" onClick={() => setCoverLetterOpen(true)}>
+          <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => setCoverLetterOpen(true)}>
             Generate Cover Letter with AI
           </Button>
         )}
+        {coverLetters.length === 0 && user && (
+          <Typography color="text.secondary">No cover letters yet. Generate one above!</Typography>
+        )}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {coverLetters.map(cl => (
+            <Box key={cl.id} sx={{ p: 2, border: '1px solid #eee', borderRadius: 2, background: '#fafafa' }}>
+              <Typography variant="h6">{cl.title}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{cl.createdAt?.toDate?.().toLocaleString?.() || ''}</Typography>
+              <Typography sx={{ whiteSpace: 'pre-wrap' }}>{cl.content}</Typography>
+            </Box>
+          ))}
+        </Box>
       </Box>
+      {/* Cover Letter Dialog */}
       <Dialog open={coverLetterOpen} onClose={() => setCoverLetterOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Generate Cover Letter with AI</DialogTitle>
         <DialogContent>
@@ -209,6 +260,13 @@ const Home: React.FC = () => {
             <Box sx={{ mt: 2, p: 2, background: '#f5f5f5', borderRadius: 2 }}>
               <Typography variant="subtitle1">Generated Cover Letter:</Typography>
               <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{coverLetter}</Typography>
+              <TextField
+                fullWidth
+                label="Title for this Cover Letter"
+                value={coverLetterTitle}
+                onChange={e => setCoverLetterTitle(e.target.value)}
+                sx={{ mt: 2 }}
+              />
               <Button sx={{ mt: 1 }} onClick={() => navigator.clipboard.writeText(coverLetter)}>Copy to Clipboard</Button>
             </Box>
           )}
@@ -221,6 +279,14 @@ const Home: React.FC = () => {
             disabled={generating || !jobDescription || selectedStoryIds.length === 0}
           >
             {generating ? 'Generating...' : 'Generate Cover Letter'}
+          </Button>
+          <Button
+            onClick={handleSaveCoverLetter}
+            variant="contained"
+            color="success"
+            disabled={savingCoverLetter || !coverLetterTitle || !coverLetter}
+          >
+            Save Cover Letter
           </Button>
         </DialogActions>
       </Dialog>
