@@ -276,7 +276,7 @@ ${notes}`;
           placeholder="Paste your study notes, lecture notes, or any content you want to be quizzed on..."
           sx={{ mb: 2 }}
         />
-        <Box sx={{ mb: 3, px: 3 }}>
+        <Box sx={{ mb: 3, px: 2, py: 2 }}>
           <Typography gutterBottom>
             Difficulty: <b>{difficulty}</b> ({difficultyLabels[difficulty]})
           </Typography>
