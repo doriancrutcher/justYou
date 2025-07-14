@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Container, 
   Typography, 
@@ -51,7 +51,7 @@ const JobSearchTracker: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -70,14 +70,14 @@ const JobSearchTracker: React.FC = () => {
       console.error('Error loading activities:', err);
       setError('Failed to load activities');
     }
-  };
+  }, [user]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user) {
       loadActivities();
     }
-  }, [user]);
+  }, [user, loadActivities]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

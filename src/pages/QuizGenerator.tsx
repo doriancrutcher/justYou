@@ -17,7 +17,8 @@ import {
   Chip,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  Slider
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useAuth } from '../components/AuthContext';
@@ -51,6 +52,7 @@ interface QuizResult {
 const QuizGenerator: React.FC = () => {
   const { user } = useAuth();
   const [notes, setNotes] = useState('');
+  const [difficulty, setDifficulty] = useState(3); // Default to 3 (easy)
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -58,6 +60,20 @@ const QuizGenerator: React.FC = () => {
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const difficultyLabels = [
+    '', // 0 (unused)
+    'Beginner',
+    'Novice',
+    'Easy',
+    'Intermediate',
+    'Competent',
+    'Proficient',
+    'Advanced',
+    'Expert',
+    'Genius',
+    'Harvard'
+  ];
 
   // 1. Generate Quiz (questions only, no explanations)
   const generateQuiz = async () => {
@@ -71,7 +87,32 @@ const QuizGenerator: React.FC = () => {
     setSuccess('');
 
     try {
-      const prompt = `Create a quiz based on the following notes. Return ONLY valid JSON, no explanations, markdown, or extra text. Limit the quiz to 5 questions. Each question should be either multiple choice (with 3-4 options) or short answer. For each question, include: id, type, question, options (if multiple choice), and correctAnswer. Do NOT include explanations or grading. Example format:\n{\n  \"title\": \"Quiz Title\",\n  \"questions\": [\n    {\n      \"id\": \"q1\",\n      \"type\": \"multiple_choice\",\n      \"question\": \"...\",\n      \"options\": [\"A\", \"B\", \"C\"],\n      \"correctAnswer\": \"A\"\n    },\n    {\n      \"id\": \"q2\",\n      \"type\": \"short_answer\",\n      \"question\": \"...\",\n      \"correctAnswer\": \"...\"\n    }\n  ]\n}\n\nNotes:\n${notes}`;
+      const prompt = `Create a quiz based on the following notes. Return ONLY valid JSON, no explanations, markdown, or extra text. Limit the quiz to 5 questions. Each question should be either multiple choice (with 3-4 options) or short answer. For each question, include: id, type, question, options (if multiple choice), and correctAnswer. Do NOT include explanations or grading.
+
+The quiz should be at difficulty level ${difficulty} (1 = Beginner, 10 = Harvard-level).
+
+Example format:
+{
+  "title": "Quiz Title",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "question": "...",
+      "options": ["A", "B", "C"],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q2",
+      "type": "short_answer",
+      "question": "...",
+      "correctAnswer": "..."
+    }
+  ]
+}
+
+Notes:
+${notes}`;
 
       const response = await callClaude(prompt);
       let quizData;
@@ -132,7 +173,7 @@ const QuizGenerator: React.FC = () => {
         options: q.options || undefined
       }));
 
-      const gradingPrompt = `You are a quiz grader. Grade the following answers. For each question, award points (5 for multiple choice, 10 for short answer), give feedback, and provide a brief explanation. Use partial credit for short answers if appropriate. Return ONLY valid JSON in this format:\n[\n  {\n    \"questionId\": \"q1\",\n    \"points\": 5,\n    \"maxPoints\": 5,\n    \"feedback\": \"...\",\n    \"explanation\": \"...\",\n    \"correctAnswer\": \"...\"\n  }\n]\n\nQuestions and Answers:\n${JSON.stringify(gradingData, null, 2)}`;
+      const gradingPrompt = `You are a quiz grader. Grade the following answers. For each question, award points (5 for multiple choice, 10 for short answer), give feedback, and provide a brief explanation. Use partial credit for short answers if appropriate. Return ONLY valid JSON in this format:\n[\n  {\n    "questionId": "q1",\n    "points": 5,n    "maxPoints": 5,n    "feedback": "...",\n    "explanation": "...",\n    "correctAnswer": "..."\n  }\n]\n\nQuestions and Answers:\n${JSON.stringify(gradingData, null, 2)}`;
 
       const response = await callClaude(gradingPrompt);
       let results;
@@ -205,7 +246,7 @@ const QuizGenerator: React.FC = () => {
       </Typography>
       
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Input your notes and generate a personalized quiz. Grading and explanations are provided after you submit your answers.
+        Input your notes, select a difficulty, and generate a personalized quiz. Grading and explanations are provided after you submit your answers.
       </Typography>
 
       {error && (
@@ -235,6 +276,31 @@ const QuizGenerator: React.FC = () => {
           placeholder="Paste your study notes, lecture notes, or any content you want to be quizzed on..."
           sx={{ mb: 2 }}
         />
+        <Box sx={{ mb: 3, px: 3 }}>
+          <Typography gutterBottom>
+            Difficulty: <b>{difficulty}</b> ({difficultyLabels[difficulty]})
+          </Typography>
+          <Slider
+            value={difficulty}
+            min={1}
+            max={10}
+            step={1}
+            marks={[
+              { value: 1, label: 'Beginner' },
+              { value: 2, label: 'Novice' },
+              { value: 3, label: 'Easy' },
+              { value: 4, label: 'Intermediate' },
+              { value: 5, label: 'Competent' },
+              { value: 6, label: 'Proficient' },
+              { value: 7, label: 'Advanced' },
+              { value: 8, label: 'Expert' },
+              { value: 9, label: 'Genius' },
+              { value: 10, label: 'Harvard' }
+            ]}
+            onChange={(_, value) => setDifficulty(value as number)}
+            valueLabelDisplay="auto"
+          />
+        </Box>
         <Button
           variant="contained"
           color="primary"
