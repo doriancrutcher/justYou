@@ -14,7 +14,7 @@ app.post('/api/claude', async (req, res) => {
   try {
     const response = await axios.post('https://api.anthropic.com/v1/messages', {
       model: 'claude-3-opus-20240229',
-      max_tokens: 4000,
+      max_tokens: 5000,
       messages: [{ role: 'user', content: prompt }]
     }, {
       headers: {

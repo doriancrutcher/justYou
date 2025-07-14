@@ -10,6 +10,9 @@ import TodoList from './pages/TodoList';
 import EditPost from './pages/EditPost';
 import GoalsPage from './pages/GoalsPage';
 import About from './pages/About';
+import ResumeObjective from './pages/ResumeObjective';
+import JobSearchTracker from './pages/JobSearchTracker';
+import QuizGenerator from './pages/QuizGenerator';
 import { AuthProvider } from './components/AuthContext';
 
 const theme = createTheme({
@@ -46,6 +49,9 @@ function App() {
             <Route path="/edit/:id" element={<EditPost />} />
             <Route path="/goals" element={<GoalsPage />} />
             <Route path="/about" element={<About />} />
+            <Route path="/resume" element={<ResumeObjective />} />
+            <Route path="/tracker" element={<JobSearchTracker />} />
+            <Route path="/quiz" element={<QuizGenerator />} />
           </Routes>
         </Router>
       </AuthProvider>
