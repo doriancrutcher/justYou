@@ -18,7 +18,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
+  Alert,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useAuth } from '../components/AuthContext';
@@ -50,6 +52,9 @@ const JobSearchTracker: React.FC = () => {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [timeMode, setTimeMode] = useState<'minutes' | 'range'>('minutes');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
   const loadActivities = useCallback(async () => {
     if (!user) return;
@@ -289,17 +294,86 @@ const JobSearchTracker: React.FC = () => {
               rows={3}
               placeholder="Describe what you did, what you learned, or any notes..."
             />
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Box sx={{ flex: '1 1 300px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <ToggleButtonGroup
+                value={timeMode}
+                exclusive
+                onChange={(_, val) => val && setTimeMode(val)}
+                sx={{ mb: 1 }}
+                size="small"
+              >
+                <ToggleButton value="minutes">Minutes</ToggleButton>
+                <ToggleButton value="range">Start/End Time</ToggleButton>
+              </ToggleButtonGroup>
+              {timeMode === 'minutes' ? (
                 <TextField
                   fullWidth
                   label="Time Spent (minutes)"
                   type="number"
-                  value={newActivity.timeSpent}
-                  onChange={(e) => setNewActivity({...newActivity, timeSpent: parseInt(e.target.value) || 0})}
+                  value={newActivity.timeSpent === 0 ? '' : newActivity.timeSpent}
+                  onChange={(e) => setNewActivity({ ...newActivity, timeSpent: parseInt(e.target.value) || 0 })}
                   inputProps={{ min: 0 }}
+                  placeholder="0"
                 />
-              </Box>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Start Time *
+                    </Typography>
+                    <TextField
+                      type="time"
+                      value={startTime}
+                      onChange={e => {
+                        setStartTime(e.target.value);
+                        if (e.target.value && endTime) {
+                          const [sh, sm] = e.target.value.split(':').map(Number);
+                          const [eh, em] = endTime.split(':').map(Number);
+                          let mins = (eh * 60 + em) - (sh * 60 + sm);
+                          if (mins < 0) mins += 24 * 60; // handle overnight
+                          setNewActivity({ ...newActivity, timeSpent: mins });
+                        }
+                      }}
+                      inputProps={{ step: 60 }}
+                      required
+                      fullWidth
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      End Time *
+                    </Typography>
+                    <TextField
+                      type="time"
+                      value={endTime}
+                      onChange={e => {
+                        setEndTime(e.target.value);
+                        if (startTime && e.target.value) {
+                          const [sh, sm] = startTime.split(':').map(Number);
+                          const [eh, em] = e.target.value.split(':').map(Number);
+                          let mins = (eh * 60 + em) - (sh * 60 + sm);
+                          if (mins < 0) mins += 24 * 60; // handle overnight
+                          setNewActivity({ ...newActivity, timeSpent: mins });
+                        }
+                      }}
+                      inputProps={{ step: 60 }}
+                      required
+                      fullWidth
+                    />
+                  </Box>
+                  <Box sx={{ width: 160 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Minutes Calculated
+                    </Typography>
+                    <TextField
+                      type="number"
+                      value={newActivity.timeSpent}
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                    />
+                  </Box>
+                </Box>
+              )}
             </Box>
             <Button
               type="submit"

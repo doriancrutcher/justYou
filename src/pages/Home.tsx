@@ -1,296 +1,414 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Card, CardContent, CardActions, Button, Box } from '@mui/material';
+import React from 'react';
+import { 
+  Container, 
+  Typography, 
+  Card, 
+  CardContent, 
+  CardActions, 
+  Button, 
+  Box, 
+  Paper,
+  Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Link,
+  IconButton
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { collection, getDocs, deleteDoc, doc, query, where, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { 
+  Book as BookIcon,
+  Flag as FlagIcon,
+  Description as DescriptionIcon,
+  Timeline as TimelineIcon,
+  Quiz as QuizIcon,
+  School as SchoolIcon,
+  ExpandMore as ExpandMoreIcon,
+  PlayArrow as PlayArrowIcon,
+  Link as LinkIcon
+} from '@mui/icons-material';
 import { useAuth } from '../components/AuthContext';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import { callClaude } from '../claudeApi';
-import { List, ListItem, ListItemText } from '@mui/material';
-import { TextField } from '@mui/material';
-
-interface Story {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  date: string;
-  authorId?: string;
-  authorName?: string;
-}
 
 const Home: React.FC = () => {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(false);
   const { user, signInWithGoogle } = useAuth();
-  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
-  const [jobDescription, setJobDescription] = useState('');
-  const [selectedStoryIds, setSelectedStoryIds] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
-  const [generating, setGenerating] = useState(false);
-  const [coverLetters, setCoverLetters] = useState<any[]>([]);
-  const [savingCoverLetter, setSavingCoverLetter] = useState(false);
-  const [coverLetterTitle, setCoverLetterTitle] = useState('');
 
-  const fetchCoverLetters = useCallback(async () => {
-    if (!user) return;
-    const q = query(collection(db, 'coverLetters'), where('userId', '==', user.uid));
-    const querySnapshot = await getDocs(q);
-    setCoverLetters(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-  }, [user]);
-
-  useEffect(() => {
-    const fetchStories = async () => {
-      setLoading(true);
-      try {
-        if (!user) return;
-        const q = query(collection(db, 'stories'), where('authorId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-        const storiesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Story[];
-        setStories(storiesData);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStories();
-    fetchCoverLetters();
-  }, [user, fetchCoverLetters]);
-
-  useEffect(() => {
-    if (selectAll) {
-      setSelectedStoryIds(stories.filter(s => user && user.uid === s.authorId).map(s => s.id));
-    } else {
-      setSelectedStoryIds([]);
+  const dailyRules = [
+    {
+      title: "No Phone while Studying",
+      description: "The mere presence of a phone has been shown to impair cognitive performance (Adrian Ward et al., University of Texas at Austin, 2017). Even when not actively used, phones create a cognitive load that reduces your ability to focus and think critically.",
+      video: "https://www.youtube.com/watch?v=G-cdVurdoeA",
+      videoTitle: "Adam Conover on AI and Phones Eroding Critical Thinking",
+      resources: ["Research: The Brain Drain of Smartphone Presence"]
+    },
+    {
+      title: "Phone is to be thought of as an evil device",
+      description: "Smartphones and social media platforms are intentionally engineered to be addictive, using tactics like infinite scroll, variable rewards, and personalized notifications to hijack attention. This isn't just about engagement — it's about creating more predictable, influenceable consumers. The result? A more distracted population that's easier to market to and less likely to critically reflect.",
+      link: "https://www.humanetech.com/who-we-are#problem",
+      linkTitle: "Center for Humane Technology – The Problem",
+      resources: ["The Social Dilemma Documentary", "Your Undivided Attention Podcast"]
+    },
+    {
+      title: "We will fill out a form of what we did today",
+      description: "Sometimes it's hard to see how much or how little we did unless it's recorded and presented to ourselves. The tracking tool is meant to help you see where you've succeeded, where you need to improve, and show you what is, and isn't working.",
+      resources: ["Daily Activity Tracking", "Progress Visualization", "Habit Formation Science"]
+    },
+    {
+      title: "AI will only be used for definitions, explanations and practice questions",
+      description: "AI is a powerful tool and we need to learn how to use it. But when studying or learning we shouldn't have it feed us answers but let it give us more tools to work out our brains. If you know the subject matter, then great use AI. If you are learning the subject matter, as Adam mentions you need to struggle to get better. Because simply put... that's just how our brains work.",
+      video: "https://www.youtube.com/watch?v=G-cdVurdoeA",
+      videoTitle: "Adam Conover on AI and Learning",
+      book: {
+        title: "Make It Stick: The Science of Successful Learning",
+        authors: "Peter C. Brown, Henry L. Roediger III, and Mark A. McDaniel",
+        description: "Explains the science behind learning through difficulty, busts myths like 'repetition = mastery', and introduces the idea of 'desirable difficulties' — struggles that help learning stick."
+      },
+      resources: ["Desirable Difficulties", "Practice vs Repetition", "Learning Science"]
+    },
+    {
+      title: "Studying is to be thought of as fun and not just to get a job",
+      description: "If you enjoy what you're learning then it becomes easier to commit the time to study. If you are just doing it to get a job, you might not enjoy that job. Not everything you study will be enjoyable, but doesn't mean you have to dislike the journey to get to the goal. Do your best to know that you are enriching your mind, and building a better future for yourself and those you love. And if you truly hate what you are learning, then try something else.",
+      resources: ["Intrinsic Motivation", "Growth Mindset", "Career Alignment"]
+    },
+    {
+      title: "When you get a headache or feel tired from studying this is to be thought of as working out a muscle at the gym until it's sore knowing it'll make you stronger",
+      description: "Mental fatigue is a sign that you're pushing your cognitive boundaries. Just like physical exercise, the discomfort you feel during intense study sessions is your brain adapting and growing stronger. This 'desirable difficulty' is essential for deep learning and skill development.",
+      resources: ["Cognitive Load Theory", "Mental Fatigue Research", "Brain Plasticity"]
+    },
+    {
+      title: "No worrying about other people's opinions as it relates to your goal, only seek constructive feedback",
+      description: "Focus on your own journey and progress rather than comparing yourself to others. Constructive feedback helps you grow, but unsolicited opinions can derail your focus and confidence. Trust your process and stay committed to your personal development path.",
+      resources: ["Self-Determination Theory", "Constructive Feedback", "Goal Setting"]
+    },
+    {
+      title: "When feeling intense emotions from the world around us, acknowledge them and turn those feelings into action",
+      description: "We live in one of the most stressful times in history, from the turmoil in the political climate, to the rise and uncertainty of AI , and with that our emotions can run high. Emotions don’t make you weak. Acknowledge them — write down what you’re feeling, why, and what might help. Then, choose what to do with that emotion. Use it to build, not break. Rest when you need to, but remember: only action changes your situation. Always bring your emotions back to action",
+      resources: ["Emotional Intelligence", "Stress Management", "Productive Coping"]
     }
-    // eslint-disable-next-line
-  }, [selectAll]);
+  ];
 
-  const handleStoryCheckbox = (id: string) => {
-    setSelectedStoryIds(prev => prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]);
-  };
-
-  const handleGenerateCoverLetter = async () => {
-    setGenerating(true);
-    setCoverLetter('');
-    const selectedStories = stories.filter(s => selectedStoryIds.includes(s.id));
-    const storiesText = selectedStories.map(s => `Title: ${s.title}\n${s.content}`).join('\n\n');
-    const prompt = `Using the following stories as background about me, write a professional cover letter for this job: ${jobDescription}\n\nMy stories:\n${storiesText}`;
-    try {
-      const result = await callClaude(prompt);
-      setCoverLetter(result);
-    } catch (err) {
-      setCoverLetter('Error: ' + err);
+  const features = [
+    {
+      title: "Story Management",
+      description: "Write and manage your career stories and experiences",
+      icon: <BookIcon sx={{ fontSize: 40 }} />,
+      path: "/create",
+      color: "#1976d2",
+      features: ["Create new stories", "Edit existing stories", "View all stories", "Generate cover letters"]
+    },
+    {
+      title: "Goal Setting",
+      description: "Set and track your career goals and milestones",
+      icon: <FlagIcon sx={{ fontSize: 40 }} />,
+      path: "/goals",
+      color: "#2e7d32",
+      features: ["Set SMART goals", "Track progress", "Visualize achievements"]
+    },
+    {
+      title: "Resume Builder",
+      description: "Optimize your resume objective with AI assistance",
+      icon: <DescriptionIcon sx={{ fontSize: 40 }} />,
+      path: "/resume",
+      color: "#ed6c02",
+      features: ["AI-powered optimization", "Professional templates", "Industry-specific guidance"]
+    },
+    {
+      title: "Job Search Tracker",
+      description: "Track your daily job search and upskilling activities",
+      icon: <TimelineIcon sx={{ fontSize: 40 }} />,
+      path: "/tracker",
+      color: "#9c27b0",
+      features: ["Log daily activities", "Track time spent", "Monitor progress", "Generate reports"]
+    },
+    {
+      title: "AI Quiz Generator",
+      description: "Generate practice quizzes from your study materials",
+      icon: <QuizIcon sx={{ fontSize: 40 }} />,
+      path: "/quiz",
+      color: "#d32f2f",
+      features: ["AI-generated questions", "Custom difficulty levels", "Instant grading", "Study reinforcement"]
+    },
+    {
+      title: "Learning Resources",
+      description: "Access educational materials and career guidance",
+      icon: <SchoolIcon sx={{ fontSize: 40 }} />,
+      path: "/resources",
+      color: "#1565c0",
+      features: ["Study materials", "Career guides", "Industry insights", "Best practices"]
     }
-    setGenerating(false);
-  };
+  ];
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this story?')) return;
-    try {
-      await deleteDoc(doc(db, 'stories', id));
-      setStories((prev) => prev.filter((story) => story.id !== id));
-    } catch (error) {
-      console.error('Error deleting story:', error);
-    }
-  };
-
-  const handleSaveCoverLetter = async () => {
-    if (!user || !coverLetterTitle.trim() || !coverLetter.trim()) return;
-    setSavingCoverLetter(true);
-    try {
-      await addDoc(collection(db, 'coverLetters'), {
-        userId: user.uid,
-        userEmail: user.email,
-        title: coverLetterTitle,
-        content: coverLetter,
-        jobDescription,
-        storyIds: selectedStoryIds,
-        createdAt: new Date(),
-      });
-      setCoverLetterTitle('');
-      setCoverLetter('');
-      setJobDescription('');
-      setSelectedStoryIds([]);
-      setCoverLetterOpen(false);
-      fetchCoverLetters();
-    } catch (err) {
-      alert('Error saving cover letter: ' + err);
-    }
-    setSavingCoverLetter(false);
-  };
+  if (!user) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Welcome to JobGoalz
+        </Typography>
+        <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
+          Your comprehensive career development platform
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Button
+            color="primary"
+            variant="contained"
+            size="large"
+            onClick={signInWithGoogle}
+            sx={{ borderRadius: 2, textTransform: 'none', px: 4, py: 1.5 }}
+          >
+            Sign in to Get Started
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Latest Stories
-      </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-        {stories.length === 0 && !loading && !user && (
-          <Typography variant="h6" color="text.secondary" sx={{ mt: 4 }}>
-            <span
-              style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}
-              onClick={signInWithGoogle}
-            >
-              Sign in
-            </span> and start writing your story!
-          </Typography>
-        )}
-        {stories.length === 0 && !loading && user && (
-          <Typography variant="h6" color="text.secondary" sx={{ mt: 4 }}>
-            You have no stories yet. Your life is a blank page—start writing before someone else does!
-          </Typography>
-        )}
-        {stories.map((story) => (
-          <Card key={story.id}>
-            <CardContent>
-              <Typography variant="h5" component="h2" gutterBottom>
-                {story.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {story.date}
-              </Typography>
-              <Typography variant="body1">
-                {story.excerpt}
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Box sx={{ background: '#1976d2', borderRadius: 1, px: 2, py: 0.5 }}>
-                  <Button
-                    size="small"
-                    component={RouterLink}
-                    to={`/post/${story.id}`}
-                    sx={{ color: '#fff', fontWeight: 'bold' }}
-                  >
-                    Read More
-                  </Button>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Daily Rules Section */}
+      <Paper elevation={2} sx={{ p: 3, mb: 4, backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h5" component="h2" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+          📋 Daily Rules to Live By
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {dailyRules.map((rule, index) => (
+            <Accordion key={index} sx={{ 
+              backgroundColor: 'transparent',
+              boxShadow: 'none',
+              '&:before': { display: 'none' },
+              '&.Mui-expanded': { margin: 0 }
+            }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{ 
+                  px: 0,
+                  '& .MuiAccordionSummary-content': { margin: 0 }
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ 
+                    width: 8, 
+                    height: 8, 
+                    borderRadius: '50%', 
+                    backgroundColor: '#1976d2',
+                    flexShrink: 0
+                  }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {rule.title}
+                  </Typography>
                 </Box>
-                {user && user.uid === story.authorId && (
-                  <Box sx={{ background: '#ffa000', borderRadius: 1, px: 2, py: 0.5 }}>
-                    <Button
-                      size="small"
-                      component={RouterLink}
-                      to={`/edit/${story.id}`}
-                      sx={{ color: '#fff', fontWeight: 'bold' }}
-                    >
-                      Edit
-                    </Button>
-                  </Box>
-                )}
-                {user && user.uid === story.authorId && (
-                  <Box sx={{ background: '#d32f2f', borderRadius: 1, px: 2, py: 0.5 }}>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(story.id)}
-                      sx={{ color: '#fff', fontWeight: 'bold' }}
-                    >
-                      Delete
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-            </CardActions>
-          </Card>
-        ))}
-      </Box>
-      {/* Cover Letters Section */}
-      <Box sx={{ mt: 6 }}>
-        <Typography variant="h4" sx={{ mb: 2 }}>Cover Letters</Typography>
-        {user && (
-          <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => setCoverLetterOpen(true)}>
-            Generate Cover Letter with AI
-          </Button>
-        )}
-        {coverLetters.length === 0 && user && (
-          <Typography color="text.secondary">No cover letters yet. Generate one above!</Typography>
-        )}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {coverLetters.map(cl => (
-            <Box key={cl.id} sx={{ p: 2, border: '1px solid #eee', borderRadius: 2, background: '#fafafa' }}>
-              <Typography variant="h6">{cl.title}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{cl.createdAt?.toDate?.().toLocaleString?.() || ''}</Typography>
-              <Typography sx={{ whiteSpace: 'pre-wrap' }}>{cl.content}</Typography>
-            </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 0, pt: 0 }}>
+                <Box sx={{ pl: 3 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {rule.description}
+                  </Typography>
+                  
+                  {/* Video Link */}
+                  {rule.video && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => window.open(rule.video, '_blank')}
+                        sx={{ color: '#1976d2' }}
+                      >
+                        <PlayArrowIcon />
+                      </IconButton>
+                      <Link
+                        href={rule.video}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ color: '#1976d2', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                      >
+                        {rule.videoTitle}
+                      </Link>
+                    </Box>
+                  )}
+
+                  {/* External Link */}
+                  {rule.link && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => window.open(rule.link, '_blank')}
+                        sx={{ color: '#1976d2' }}
+                      >
+                        <LinkIcon />
+                      </IconButton>
+                      <Link
+                        href={rule.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ color: '#1976d2', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                      >
+                        {rule.linkTitle}
+                      </Link>
+                    </Box>
+                  )}
+
+                  {/* Book Recommendation */}
+                  {rule.book && (
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2, p: 2, backgroundColor: '#f0f8ff', borderRadius: 1 }}>
+                      <BookIcon sx={{ color: '#1976d2', fontSize: 20, mt: 0.5 }} />
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#1976d2' }}>
+                          📚 {rule.book.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          by {rule.book.authors}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          {rule.book.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Resources */}
+                  {rule.resources && rule.resources.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {rule.resources.map((resource, resourceIndex) => (
+                        <Chip
+                          key={resourceIndex}
+                          label={resource}
+                          clickable={false}
+                          size="small"
+                          sx={{ 
+                            backgroundColor: '#e3f2fd',
+                            color: '#1976d2',
+                            fontWeight: 500,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
           ))}
         </Box>
+      </Paper>
+
+      {/* Welcome Section */}
+      <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 1 }}>
+        Welcome back, {user.displayName?.split(' ')[0] || 'User'}! 👋
+      </Typography>
+      <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
+        Choose a feature to continue your career journey
+      </Typography>
+
+      {/* Features Grid */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+        {features.map((feature, index) => (
+          <Box key={index}>
+            <Card 
+              elevation={2} 
+              sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4,
+                }
+              }}
+            >
+              <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    color: feature.color, 
+                    mr: 2,
+                    p: 1,
+                    borderRadius: 2,
+                    backgroundColor: `${feature.color}15`
+                  }}>
+                    {feature.icon}
+                  </Box>
+                  <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
+                    {feature.title}
+                  </Typography>
+                </Box>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {feature.description}
+                </Typography>
+
+                <Box sx={{ mb: 2 }}>
+                  {feature.features.map((feat, featIndex) => (
+                    <Chip
+                      key={featIndex}
+                      label={feat}
+                      size="small"
+                      sx={{ 
+                        mr: 0.5, 
+                        mb: 0.5,
+                        backgroundColor: `${feature.color}20`,
+                        color: feature.color,
+                        fontWeight: 500
+                      }}
+                    />
+                  ))}
+                </Box>
+              </CardContent>
+              
+              <CardActions sx={{ p: 3, pt: 0 }}>
+                <Button
+                  component={RouterLink}
+                  to={feature.path}
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    backgroundColor: feature.color,
+                    color: 'white',
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 'bold',
+                    '&:hover': {
+                      backgroundColor: feature.color,
+                      opacity: 0.9
+                    }
+                  }}
+                >
+                  Get Started
+                </Button>
+              </CardActions>
+            </Card>
+          </Box>
+        ))}
       </Box>
-      {/* Cover Letter Dialog */}
-      <Dialog open={coverLetterOpen} onClose={() => setCoverLetterOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Generate Cover Letter with AI</DialogTitle>
-        <DialogContent>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>Paste the job description below:</Typography>
-          <TextField
-            fullWidth
-            multiline
-            minRows={4}
-            value={jobDescription}
-            onChange={e => setJobDescription(e.target.value)}
-            placeholder="Paste job description here..."
-            sx={{ mb: 2 }}
-          />
-          <FormControlLabel
-            control={<Checkbox checked={selectAll} onChange={e => setSelectAll(e.target.checked)} />}
-            label="Select All My Stories"
-          />
-          <List>
-            {stories.filter(s => user && user.uid === s.authorId).map(story => (
-              <ListItem key={story.id}>
-                <Checkbox
-                  checked={selectedStoryIds.includes(story.id)}
-                  onChange={() => handleStoryCheckbox(story.id)}
-                />
-                <ListItemText primary={story.title} secondary={story.date} />
-              </ListItem>
-            ))}
-          </List>
-          {coverLetter && (
-            <Box sx={{ mt: 2, p: 2, background: '#f5f5f5', borderRadius: 2 }}>
-              <Typography variant="subtitle1">Generated Cover Letter:</Typography>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{coverLetter}</Typography>
-              <TextField
-                fullWidth
-                label="Title for this Cover Letter"
-                value={coverLetterTitle}
-                onChange={e => setCoverLetterTitle(e.target.value)}
-                sx={{ mt: 2 }}
-              />
-              <Button sx={{ mt: 1 }} onClick={() => navigator.clipboard.writeText(coverLetter)}>Copy to Clipboard</Button>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCoverLetterOpen(false)}>Close</Button>
-          <Button
-            onClick={handleGenerateCoverLetter}
-            variant="contained"
-            disabled={generating || !jobDescription || selectedStoryIds.length === 0}
-          >
-            {generating ? 'Generating...' : 'Generate Cover Letter'}
-          </Button>
-          <Button
-            onClick={handleSaveCoverLetter}
-            variant="contained"
-            color="success"
-            disabled={savingCoverLetter || !coverLetterTitle || !coverLetter}
-          >
-            Save Cover Letter
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {loading && <Typography sx={{ mt: 2 }}>Loading...</Typography>}
+
+      {/* Quick Stats Section */}
+      <Paper elevation={2} sx={{ p: 3, mt: 4, backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h6" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+          🎯 Your Career Journey
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+          <Box sx={{ textAlign: 'center', p: 2 }}>
+            <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+              ∞
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Opportunities Ahead
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'center', p: 2 }}>
+            <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+              💪
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Growth Mindset
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'center', p: 2 }}>
+            <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
+              🚀
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Career Success
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
     </Container>
   );
 };

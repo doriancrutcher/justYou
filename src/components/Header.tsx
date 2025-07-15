@@ -53,8 +53,8 @@ const Header: React.FC = () => {
             <Button color="inherit" component={RouterLink} to="/quiz">
               Quiz
             </Button>
-            <Button color="inherit" component={RouterLink} to="/about">
-              About
+            <Button color="inherit" component={RouterLink} to="/resources">
+              Resources
             </Button>
           </Box>
 
@@ -76,11 +76,6 @@ const Header: React.FC = () => {
                   <MenuItem disabled>{user.displayName}</MenuItem>
                   <MenuItem onClick={signOutUser}>Sign Out</MenuItem>
                 </Menu>
-                {user && (
-                  <Button color="primary" variant="contained" sx={{ borderRadius: 2, textTransform: 'none' }} component={RouterLink} to="/create">
-                    New Story
-                  </Button>
-                )}
               </>
             ) : (
               <Button color="primary" variant="contained" sx={{ borderRadius: 2, textTransform: 'none' }} onClick={signInWithGoogle}>
