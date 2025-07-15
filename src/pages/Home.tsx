@@ -199,16 +199,31 @@ const Home: React.FC = () => {
             }}>
               Created by
             </Typography>
-            <Typography variant="h5" sx={{ 
-              fontFamily: '"Dancing Script", cursive',
-              fontWeight: 'bold',
-              color: '#1976d2',
-              transform: 'rotate(-2deg)',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
-              letterSpacing: '0.5px'
-            }}>
-              Dorian Crutcher
-            </Typography>
+            <Link
+              href="https://www.linkedin.com/in/dorian-crutcher/"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ 
+                textDecoration: 'none',
+                '&:hover': { 
+                  opacity: 0.8,
+                  transform: 'scale(1.02)'
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              <Typography variant="h5" sx={{ 
+                fontFamily: '"Dancing Script", cursive',
+                fontWeight: 'bold',
+                color: '#1976d2',
+                transform: 'rotate(-2deg)',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+                letterSpacing: '0.5px',
+                cursor: 'pointer'
+              }}>
+                Dorian Crutcher
+              </Typography>
+            </Link>
           </Box>
           
           
