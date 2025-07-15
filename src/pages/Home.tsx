@@ -535,7 +535,35 @@ const Home: React.FC = () => {
         ))}
       </Box>
 
-      {/* Quick Stats Section */}
+      {/* Contact Section */}
+      <Box sx={{ mt: 8, pt: 4, borderTop: '1px solid #e0e0e0' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Have suggestions or want to connect?
+          </Typography>
+          <Link
+            href="https://www.linkedin.com/in/dorian-crutcher/"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ 
+              color: '#1976d2', 
+              textDecoration: 'none', 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              '&:hover': { 
+                textDecoration: 'underline',
+                opacity: 0.8
+              }
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Connect with the developer on LinkedIn 
+            </Typography>
+            <LinkIcon sx={{ fontSize: 16 }} />
+          </Link>
+        </Box>
+      </Box>
 
     </Container>
   );

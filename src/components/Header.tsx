@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Container, Box, Avatar, IconButton, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Avatar, IconButton, Menu, MenuItem, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -74,6 +74,15 @@ const Header: React.FC = () => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem disabled>{user.displayName}</MenuItem>
+                  <MenuItem 
+                    component={Link}
+                    href="https://www.linkedin.com/in/dorian-crutcher/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    Connect on LinkedIn
+                  </MenuItem>
                   <MenuItem onClick={signOutUser}>Sign Out</MenuItem>
                 </Menu>
               </>
