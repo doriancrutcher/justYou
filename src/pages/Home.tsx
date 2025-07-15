@@ -47,7 +47,7 @@ const Home: React.FC = () => {
       icon: <PsychologyIcon sx={{ fontSize: 48, color: '#1976d2' }} />,
       title: "Train Smarter with AI-Powered Quizzes",
       description: "Turn your notes into quizzes to sharpen your skills and prep for interviews with confidence.",
-      features: ["AI-generated questions", "Custom difficulty levels", "Instant feedback", "Interview prep"]
+      features: ["AI-generated questions", "Custom difficulty levels", "Instant feedback"]
     },
     {
       icon: <AutoStoriesIcon sx={{ fontSize: 48, color: '#ed6c02' }} />,
