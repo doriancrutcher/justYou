@@ -161,8 +161,8 @@ const Home: React.FC = () => {
   ];
 
   if (!user) {
-    return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
         {/* Hero Section */}
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography variant="h3" component="h1" gutterBottom sx={{ 
@@ -249,7 +249,7 @@ const Home: React.FC = () => {
                   flexGrow: 1
                 }}>
                   {proposition.description}
-                </Typography>
+              </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {proposition.features.map((feature, featureIndex) => (
                     <Box key={featureIndex} sx={{ 
@@ -284,11 +284,11 @@ const Home: React.FC = () => {
           }}>
             <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
               Ready to Transform Your Career?
-            </Typography>
+              </Typography>
             <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
               Join thousands of professionals who are already using JobGoalz to accelerate their career development
-            </Typography>
-            <Button
+              </Typography>
+                  <Button
               variant="contained"
               size="large"
               onClick={signInWithGoogle}
@@ -310,7 +310,7 @@ const Home: React.FC = () => {
               }}
             >
               Sign in with Google to Get Started
-            </Button>
+                  </Button>
           </Box>
 
 
@@ -364,7 +364,7 @@ const Home: React.FC = () => {
                   {rule.video && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                       <IconButton
-                        size="small"
+                      size="small"
                         onClick={() => window.open(rule.video, '_blank')}
                         sx={{ color: '#1976d2' }}
                       >
@@ -378,14 +378,14 @@ const Home: React.FC = () => {
                       >
                         {rule.videoTitle}
                       </Link>
-                    </Box>
-                  )}
+                  </Box>
+                )}
 
                   {/* External Link */}
                   {rule.link && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                       <IconButton
-                        size="small"
+                      size="small"
                         onClick={() => window.open(rule.link, '_blank')}
                         sx={{ color: '#1976d2' }}
                       >
@@ -399,8 +399,8 @@ const Home: React.FC = () => {
                       >
                         {rule.linkTitle}
                       </Link>
-                    </Box>
-                  )}
+                  </Box>
+                )}
 
                   {/* Book Recommendation */}
                   {rule.book && (
@@ -417,7 +417,7 @@ const Home: React.FC = () => {
                           {rule.book.description}
                         </Typography>
                       </Box>
-                    </Box>
+              </Box>
                   )}
 
                   {/* Resources */}
@@ -436,10 +436,10 @@ const Home: React.FC = () => {
                             fontSize: '0.75rem'
                           }}
                         />
-                      ))}
-                    </Box>
+        ))}
+      </Box>
                   )}
-                </Box>
+            </Box>
               </AccordionDetails>
             </Accordion>
           ))}
@@ -485,7 +485,7 @@ const Home: React.FC = () => {
                   <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
                     {feature.title}
                   </Typography>
-                </Box>
+      </Box>
                 
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {feature.description}
@@ -506,14 +506,14 @@ const Home: React.FC = () => {
                       }}
                     />
                   ))}
-                </Box>
+            </Box>
               </CardContent>
               
               <CardActions sx={{ p: 3, pt: 0 }}>
-                <Button
+          <Button
                   component={RouterLink}
                   to={feature.path}
-                  variant="contained"
+            variant="contained"
                   fullWidth
                   sx={{
                     backgroundColor: feature.color,
@@ -528,7 +528,7 @@ const Home: React.FC = () => {
                   }}
                 >
                   Get Started
-                </Button>
+          </Button>
               </CardActions>
             </Card>
           </Box>

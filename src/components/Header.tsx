@@ -38,7 +38,7 @@ const Header: React.FC = () => {
 
           {/* Center: Navigation Links */}
           <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', gap: 2 }}>
-            <Button color="inherit" component={RouterLink} to="/">
+            <Button color="inherit" component={RouterLink} to="/stories">
               Stories
             </Button>
             <Button color="inherit" component={RouterLink} to="/goals">

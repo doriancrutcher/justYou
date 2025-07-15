@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Container, Typography, Box, Button, TextField, Checkbox, List, ListItem, ListItemText, IconButton, Divider, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -33,7 +33,6 @@ const GoalsPage: React.FC = () => {
   const [categories, setCategories] = useState<GoalCategory[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newTask, setNewTask] = useState<{ [catId: string]: string }>({});
-  const [suggestions, setSuggestions] = useState<{ [catId: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ type: 'category' | 'task', id: string, categoryId?: string } | null>(null);
 
@@ -46,7 +45,7 @@ const GoalsPage: React.FC = () => {
   }, [user, categories.length]);
 
   // Fetch categories from Firestore - only for authenticated user
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     if (!user) {
       setCategories([]);
       return;
@@ -79,11 +78,11 @@ const GoalsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchCategories();
-  }, [user]); // Re-fetch when user changes
+  }, [fetchCategories]); // Re-fetch when user changes
 
   // Add new category - only for authenticated users
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -209,29 +208,6 @@ const GoalsPage: React.FC = () => {
       categoryName: cat?.category,
       tasksInCategory: cat?.tasks.length || 0,
       remainingCategories: reorderedCategories.length,
-      userId: user.uid
-    });
-  };
-
-  // Suggest a goal - only for authenticated users
-  const handleSuggest = async (catId: string) => {
-    if (!user) return;
-    
-    const text = suggestions[catId]?.trim();
-    if (!text) return;
-    const cat = categories.find(c => c.id === catId);
-    if (!cat) return;
-    const newSuggestion: Suggestion = { id: uuidv4(), text, suggestedBy: user.email || 'anonymous' };
-    const updatedSuggestions = [...cat.suggestions, newSuggestion];
-    await updateDoc(doc(db, 'goals', catId), { suggestions: updatedSuggestions });
-    setCategories(categories.map(c => c.id === catId ? { ...c, suggestions: updatedSuggestions } : c));
-    setSuggestions({ ...suggestions, [catId]: '' });
-    
-    // Track suggestion submission
-    Analytics.trackGoalEvent('Submit Suggestion', 'Suggestion', {
-      categoryName: cat.category,
-      suggestionText: text,
-      suggestedBy: user.email || 'anonymous',
       userId: user.uid
     });
   };

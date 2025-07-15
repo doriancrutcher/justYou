@@ -53,7 +53,7 @@ const CreatePost: React.FC = () => {
       });
       
       console.log('Story written with ID:', docRef.id);
-      navigate('/');
+      navigate('/stories');
     } catch (error) {
       console.error('Error adding story:', error);
     } finally {

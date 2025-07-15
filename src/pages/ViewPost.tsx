@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Typography, Paper, Box } from '@mui/material';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -28,7 +28,7 @@ const ViewPost: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [story, setStory] = useState<Story | null>(null);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [coverLetterOpen, setCoverLetterOpen] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [allStories, setAllStories] = useState<any[]>([]);
@@ -63,13 +63,27 @@ const ViewPost: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    // Fetch all stories for selection
-    const fetchAllStories = async () => {
-      const querySnapshot = await getDocs(collection(db, 'stories'));
-      setAllStories(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    // Fetch only user's stories for selection
+    const fetchUserStories = async () => {
+      if (!user) {
+        setAllStories([]);
+        return;
+      }
+      
+      try {
+        const storiesQuery = query(
+          collection(db, 'stories'),
+          where('authorId', '==', user.uid)
+        );
+        const querySnapshot = await getDocs(storiesQuery);
+        setAllStories(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        console.error('Error fetching user stories:', error);
+        setAllStories([]);
+      }
     };
-    fetchAllStories();
-  }, []);
+    fetchUserStories();
+  }, [user]);
 
   useEffect(() => {
     if (selectAll) {
@@ -131,6 +145,30 @@ const ViewPost: React.FC = () => {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Typography>Story not found</Typography>
+      </Container>
+    );
+  }
+
+  // Check if user is authorized to view this story
+  if (!user || (story.authorId && story.authorId !== user.uid)) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Access Denied
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            You don't have permission to view this story.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={signInWithGoogle}
+            sx={{ borderRadius: 2, textTransform: 'none', px: 4, py: 1.5 }}
+          >
+            Sign in to Access Stories
+          </Button>
+        </Box>
       </Container>
     );
   }

@@ -13,6 +13,7 @@ import ResumeObjective from './pages/ResumeObjective';
 import JobSearchTracker from './pages/JobSearchTracker';
 import QuizGenerator from './pages/QuizGenerator';
 import Resources from './pages/Resources';
+import StoriesPage from './pages/StoriesPage';
 import { AuthProvider } from './components/AuthContext';
 import { Analytics } from './mixpanel';
 
@@ -67,6 +68,7 @@ function App() {
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/stories" element={<StoriesPage />} />
             <Route path="/create" element={<CreatePost />} />
             <Route path="/post/:id" element={<ViewPost />} />
             <Route path="/todos" element={<TodoList />} />
