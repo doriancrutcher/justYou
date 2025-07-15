@@ -10,19 +10,31 @@ import {
   IconButton,
   Chip,
   Paper,
-  Fab
+  Fab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
 import { 
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
-import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, deleteDoc, doc, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../components/AuthContext';
 import { Analytics } from '../mixpanel';
+import { callClaude } from '../claudeApi';
 
 interface Story {
   id: string;
@@ -40,6 +52,14 @@ const StoriesPage: React.FC = () => {
   const { user, signInWithGoogle } = useAuth();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(false);
+  const [coverLetterOpen, setCoverLetterOpen] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
+  const [selectedStoryIds, setSelectedStoryIds] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [editText, setEditText] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const fetchStories = useCallback(async () => {
     if (!user) {
@@ -81,6 +101,14 @@ const StoriesPage: React.FC = () => {
     fetchStories();
   }, [fetchStories]);
 
+  useEffect(() => {
+    if (selectAll) {
+      setSelectedStoryIds(stories.map(s => s.id));
+    } else {
+      setSelectedStoryIds([]);
+    }
+  }, [selectAll, stories]);
+
   const handleDeleteStory = async (storyId: string) => {
     if (!user) return;
     
@@ -101,6 +129,46 @@ const StoriesPage: React.FC = () => {
         userId: user?.uid
       });
     }
+  };
+
+  // Cover letter generation functions
+  const handleStoryCheckbox = (id: string) => {
+    setSelectedStoryIds(prev => prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]);
+  };
+
+  const handleGenerateCoverLetter = async () => {
+    setGenerating(true);
+    setCoverLetter('');
+    setEditText('');
+    const selectedStories = stories.filter(s => selectedStoryIds.includes(s.id));
+    const storiesText = selectedStories.map(s => `Title: ${s.title}\n${s.content}`).join('\n\n');
+    const prompt = `Using the following stories as background about me, write a professional cover letter for this job: ${jobDescription}\n\nMy stories:\n${storiesText}`;
+    try {
+      const result = await callClaude(prompt);
+      setCoverLetter(result);
+      setEditText(result);
+    } catch (err) {
+      setCoverLetter('Error: ' + err);
+      setEditText('Error: ' + err);
+    }
+    setGenerating(false);
+  };
+
+  const handleSaveCoverLetter = async () => {
+    setSaving(true);
+    try {
+      await addDoc(collection(db, 'coverLetters'), {
+        jobDescription,
+        storyIds: selectedStoryIds,
+        coverLetter: editText,
+        createdAt: new Date(),
+        userEmail: user?.email || '',
+      });
+      setCoverLetterOpen(false);
+    } catch (err) {
+      alert('Error saving cover letter: ' + err);
+    }
+    setSaving(false);
   };
 
   // Show sign-in prompt if not authenticated
@@ -133,15 +201,25 @@ const StoriesPage: React.FC = () => {
         <Typography variant="h4" component="h1">
           Your Stories
         </Typography>
-        <Button
-          variant="contained"
-          component={RouterLink}
-          to="/create"
-          startIcon={<AddIcon />}
-          sx={{ borderRadius: 2, textTransform: 'none' }}
-        >
-          New Story
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setCoverLetterOpen(true)}
+            startIcon={<DescriptionIcon />}
+            sx={{ borderRadius: 2, textTransform: 'none' }}
+          >
+            Generate Cover Letter
+          </Button>
+          <Button
+            variant="contained"
+            component={RouterLink}
+            to="/create"
+            startIcon={<AddIcon />}
+            sx={{ borderRadius: 2, textTransform: 'none' }}
+          >
+            New Story
+          </Button>
+        </Box>
       </Box>
 
       {loading ? (
@@ -258,6 +336,65 @@ const StoriesPage: React.FC = () => {
       >
         <AddIcon />
       </Fab>
+
+      {/* Cover Letter Generator Modal */}
+      <Dialog open={coverLetterOpen} onClose={() => setCoverLetterOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Generate Cover Letter with AI</DialogTitle>
+        <DialogContent>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>Paste the job description below:</Typography>
+          <TextField
+            fullWidth
+            multiline
+            minRows={4}
+            value={jobDescription}
+            onChange={e => setJobDescription(e.target.value)}
+            placeholder="Paste job description here..."
+            sx={{ mb: 2 }}
+          />
+          <FormControlLabel
+            control={<Checkbox checked={selectAll} onChange={e => setSelectAll(e.target.checked)} />}
+            label="Select All My Stories"
+          />
+          <List>
+            {stories.map(story => (
+              <ListItem key={story.id}>
+                <Checkbox
+                  checked={selectedStoryIds.includes(story.id)}
+                  onChange={() => handleStoryCheckbox(story.id)}
+                />
+                <ListItemText primary={story.title} secondary={story.date} />
+              </ListItem>
+            ))}
+          </List>
+          {coverLetter && (
+            <Box sx={{ mt: 2, p: 2, background: '#f5f5f5', borderRadius: 2 }}>
+              <Typography variant="subtitle1">Generated Cover Letter (edit before saving):</Typography>
+              <TextField
+                fullWidth
+                multiline
+                minRows={8}
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+                sx={{ mb: 1 }}
+              />
+              <Button sx={{ mr: 1 }} onClick={() => navigator.clipboard.writeText(editText)}>Copy to Clipboard</Button>
+              <Button variant="contained" color="success" onClick={handleSaveCoverLetter} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Cover Letter'}
+              </Button>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCoverLetterOpen(false)}>Close</Button>
+          <Button
+            onClick={handleGenerateCoverLetter}
+            variant="contained"
+            disabled={generating || !jobDescription || selectedStoryIds.length === 0}
+          >
+            {generating ? 'Generating...' : 'Generate Cover Letter'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
