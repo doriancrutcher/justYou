@@ -13,9 +13,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Link,
-  IconButton,
-  Grid
-} from '@mui/material';
+  IconButton} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { 
   Book as BookIcon,
