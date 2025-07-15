@@ -26,6 +26,7 @@ import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useAuth } from '../components/AuthContext';
 import { collection, addDoc, query, where, orderBy, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { Analytics } from '../mixpanel';
 
 interface Activity {
   id: string;
@@ -56,6 +57,14 @@ const JobSearchTracker: React.FC = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
 
+  // Track page load
+  useEffect(() => {
+    Analytics.trackFeatureUsage('Job Search Tracker', {
+      activitiesCount: activities.length,
+      timeInputMode: timeMode
+    });
+  }, [activities.length, timeMode]);
+
   const loadActivities = useCallback(async () => {
     if (!user) return;
     
@@ -71,9 +80,17 @@ const JobSearchTracker: React.FC = () => {
         ...doc.data()
       })) as Activity[];
       setActivities(activitiesData);
+      
+      // Track successful fetch
+      Analytics.trackJobSearchEvent('Fetch Activities', {
+        activitiesCount: activitiesData.length
+      });
     } catch (err) {
       console.error('Error loading activities:', err);
       setError('Failed to load activities');
+      Analytics.trackError('Fetch Job Search Activities Error', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
     }
   }, [user]);
 
@@ -90,6 +107,32 @@ const JobSearchTracker: React.FC = () => {
 
     if (!newActivity.title.trim()) {
       setError('Please enter a title for your activity');
+      Analytics.trackJobSearchEvent('Add Activity Attempt', {
+        error: 'Missing required fields',
+        hasActivity: !!newActivity.title.trim()
+      });
+      return;
+    }
+
+    let timeSpent = 0;
+    if (timeMode === 'minutes') {
+      timeSpent = parseInt(newActivity.timeSpent === 0 ? '' : newActivity.timeSpent.toString()) || 0;
+    } else {
+      // Calculate time from start/end times
+      if (startTime && endTime) {
+        const start = new Date(`2000-01-01T${startTime}`);
+        const end = new Date(`2000-01-01T${endTime}`);
+        timeSpent = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+      }
+    }
+
+    if (timeSpent <= 0) {
+      setError('Please enter a valid time spent');
+      Analytics.trackJobSearchEvent('Add Activity Attempt', {
+        error: 'Invalid time spent',
+        timeInputMode: timeMode,
+        timeSpent
+      });
       return;
     }
 
@@ -99,11 +142,21 @@ const JobSearchTracker: React.FC = () => {
         userId: user.uid,
         userEmail: user.email,
         date: new Date().toISOString().split('T')[0],
-        createdAt: new Date()
+        createdAt: new Date(),
+        timeSpent: timeSpent
       };
 
       await addDoc(collection(db, 'activities'), activityData);
       
+      // Track successful activity addition
+      Analytics.trackJobSearchEvent('Add Activity Success', {
+        activity: newActivity.title.trim(),
+        company: newActivity.description.trim(), // Assuming description is company name for job search
+        timeSpent,
+        timeInputMode: timeMode,
+        totalActivities: activities.length + 1
+      });
+
       setNewActivity({
         type: 'job_search',
         title: '',
@@ -117,6 +170,11 @@ const JobSearchTracker: React.FC = () => {
     } catch (err) {
       console.error('Error adding activity:', err);
       setError('Failed to add activity');
+      Analytics.trackError('Add Job Search Activity Error', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        activity: newActivity.title.trim(),
+        company: newActivity.description.trim()
+      });
     }
   };
 
@@ -128,13 +186,30 @@ const JobSearchTracker: React.FC = () => {
   const handleUpdate = async () => {
     if (!editingActivity) return;
 
+    let timeSpent = 0;
+    if (timeMode === 'minutes') {
+      timeSpent = parseInt(editingActivity.timeSpent.toString()) || 0;
+    } else {
+      // Calculate time from start/end times
+      if (startTime && endTime) {
+        const start = new Date(`2000-01-01T${startTime}`);
+        const end = new Date(`2000-01-01T${endTime}`);
+        timeSpent = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+      }
+    }
+
+    if (timeSpent <= 0) {
+      setError('Please enter a valid time spent');
+      return;
+    }
+
     try {
       const activityRef = doc(db, 'activities', editingActivity.id);
       await updateDoc(activityRef, {
         type: editingActivity.type,
         title: editingActivity.title,
         description: editingActivity.description,
-        timeSpent: editingActivity.timeSpent,
+        timeSpent: timeSpent,
         status: editingActivity.status
       });
 
@@ -145,6 +220,10 @@ const JobSearchTracker: React.FC = () => {
     } catch (err) {
       console.error('Error updating activity:', err);
       setError('Failed to update activity');
+      Analytics.trackError('Update Job Search Activity Error', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        activityId: editingActivity.id
+      });
     }
   };
 
@@ -153,9 +232,23 @@ const JobSearchTracker: React.FC = () => {
       await deleteDoc(doc(db, 'activities', activityId));
       setSuccess('Activity deleted successfully!');
       loadActivities();
+      
+      // Track activity deletion
+      const activityToDelete = activities.find(a => a.id === activityId);
+      Analytics.trackJobSearchEvent('Delete Activity', {
+        activityId,
+        activity: activityToDelete?.title,
+        company: activityToDelete?.description,
+        timeSpent: activityToDelete?.timeSpent,
+        remainingActivities: activities.length - 1
+      });
     } catch (err) {
       console.error('Error deleting activity:', err);
       setError('Failed to delete activity');
+      Analytics.trackError('Delete Job Search Activity Error', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        activityId
+      });
     }
   };
 

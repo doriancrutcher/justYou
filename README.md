@@ -1,54 +1,165 @@
 # JobGoalz
 
-JobGoalz is your personal vault for life stories and experiences. Create a collection of personalized stories—moments, memories, and reflections that matter to you. Use your story collection as a creative toolkit: generate cover letters, bios, or anything else you need, all based on your authentic experiences. No more scrambling to remember details or rewriting your story from scratch—your life's highlights are always at your fingertips.
+A comprehensive career development and job search tracking application built with React, TypeScript, Firebase, and Claude AI.
 
----
+## Features
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+- **AI-Powered Quiz Generator**: Create custom quizzes from your notes with difficulty levels
+- **Job Search Tracker**: Monitor your job search activities and time spent
+- **Goals Management**: Organize and track career goals with drag-and-drop reordering
+- **Resume Objective Optimizer**: Get AI-powered suggestions for resume objectives
+- **Story Management**: Create and manage professional stories for interviews
+- **Todo Lists**: Simple task management for career development
+- **Resources**: Curated learning materials and career resources
 
-## Available Scripts
+## Setup
 
-In the project directory, you can run:
+### Prerequisites
 
-### `npm start`
+- Node.js (v14 or higher)
+- npm or yarn
+- Firebase project
+- Claude API access
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Installation
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd justYou
+```
 
-### `npm test`
+2. Install dependencies:
+```bash
+npm install
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3. Create a `.env` file in the root directory with the following variables:
 
-### `npm run build`
+```env
+# Firebase Configuration
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+REACT_APP_FIREBASE_PROJECT_ID=your_firebase_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+REACT_APP_FIREBASE_APP_ID=your_firebase_app_id
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Claude API Configuration
+REACT_APP_CLAUDE_API_KEY=your_claude_api_key
+REACT_APP_CLAUDE_PROXY_URL=http://localhost:3001
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Admin Configuration
+REACT_APP_ADMIN_EMAIL=your_admin_email@example.com
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Mixpanel Analytics (Optional)
+REACT_APP_MIXPANEL_TOKEN=your_mixpanel_project_token
+```
 
-### `npm run eject`
+### Firebase Setup
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication with Google sign-in
+3. Create a Firestore database
+4. Set up security rules for Firestore
+5. Add your Firebase configuration to the `.env` file
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Claude API Setup
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+1. Get your Claude API key from [Anthropic Console](https://console.anthropic.com/)
+2. Set up the Claude proxy server (see `claude-backend/` directory)
+3. Add your API key to the `.env` file
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Mixpanel Analytics Setup (Optional)
 
-## Learn More
+1. Create a Mixpanel project at [Mixpanel](https://mixpanel.com/)
+2. Get your project token from the project settings
+3. Add the token to your `.env` file as `REACT_APP_MIXPANEL_TOKEN`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The app will automatically track:
+- User authentication events
+- Page views and navigation
+- Feature usage across all pages
+- Goal management actions (create, delete, reorder)
+- Quiz generation and grading
+- Job search activity tracking
+- Error events and debugging information
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-# JustYouRepo
-# JustYouRepo
-# JustYouRepo
-# JustYouRepo
+### Running the Application
+
+1. Start the development server:
+```bash
+npm start
+```
+
+2. Start the Claude backend server (in a separate terminal):
+```bash
+cd claude-backend
+npm install
+npm start
+```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Analytics Tracking
+
+The application includes comprehensive analytics tracking via Mixpanel:
+
+### User Events Tracked
+
+- **Authentication**: Sign in/out, user identification
+- **Page Views**: All page visits with navigation data
+- **Feature Usage**: Usage of each major feature
+- **Goal Management**: Create, delete, reorder goals and categories
+- **Quiz Generation**: Quiz creation, grading, difficulty settings
+- **Job Search**: Activity tracking, time logging
+- **Error Tracking**: All errors with context for debugging
+
+### Analytics Data Structure
+
+All events include:
+- Timestamp
+- User ID (when authenticated)
+- Page context
+- Feature-specific data
+- Error details (when applicable)
+
+### Privacy Considerations
+
+- User data is anonymized when possible
+- No sensitive information is tracked
+- Analytics can be disabled by removing the Mixpanel token
+- All tracking is transparent and documented
+
+## Deployment
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+### Deploy to Netlify
+
+1. Connect your repository to Netlify
+2. Set build command: `npm run build`
+3. Set publish directory: `build`
+4. Add environment variables in Netlify dashboard
+
+### Deploy to Vercel
+
+1. Connect your repository to Vercel
+2. Set build command: `npm run build`
+3. Add environment variables in Vercel dashboard
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

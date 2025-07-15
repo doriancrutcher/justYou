@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, Button, TextField, Checkbox, List, ListItem, ListItemText, IconButton, Divider, Paper, Chip } from '@mui/material';
+import { Container, Typography, Box, Button, TextField, Checkbox, List, ListItem, ListItemText, IconButton, Divider, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { collection, getDocs, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../components/AuthContext';
+import { Analytics } from '../mixpanel';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Task {
@@ -36,6 +37,14 @@ const GoalsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ type: 'category' | 'task', id: string, categoryId?: string } | null>(null);
 
+  // Track page load
+  useEffect(() => {
+    Analytics.trackFeatureUsage('Goals Page', {
+      isOwner,
+      categoriesCount: categories.length
+    });
+  }, [isOwner, categories.length]);
+
   // Fetch categories from Firestore
   const fetchCategories = async () => {
     setLoading(true);
@@ -45,8 +54,16 @@ const GoalsPage: React.FC = () => {
       // Sort by order if it exists, otherwise by creation time
       const sortedCats = cats.sort((a, b) => (a.order || 0) - (b.order || 0));
       setCategories(sortedCats);
+      
+      // Track successful fetch
+      Analytics.trackGoalEvent('Fetch Categories', 'Success', {
+        categoriesCount: sortedCats.length
+      });
     } catch (error) {
       console.error('Error fetching goals:', error);
+      Analytics.trackError('Fetch Goals Error', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     } finally {
       setLoading(false);
     }
@@ -71,8 +88,18 @@ const GoalsPage: React.FC = () => {
       await setDoc(doc(db, 'goals', newCat.id), newCat);
       setCategories([...categories, newCat]);
       setNewCategory('');
+      
+      // Track category creation
+      Analytics.trackGoalEvent('Create Category', 'Category', {
+        categoryName: newCategory,
+        totalCategories: categories.length + 1
+      });
     } catch (error) {
       console.error('Error adding category:', error);
+      Analytics.trackError('Create Category Error', {
+        categoryName: newCategory,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   };
 
@@ -92,30 +119,54 @@ const GoalsPage: React.FC = () => {
     await updateDoc(doc(db, 'goals', catId), { tasks: updatedTasks });
     setCategories(categories.map(c => c.id === catId ? { ...c, tasks: updatedTasks } : c));
     setNewTask({ ...newTask, [catId]: '' });
+    
+    // Track task creation
+    Analytics.trackGoalEvent('Create Task', 'Task', {
+      categoryName: cat.category,
+      taskText: text,
+      totalTasksInCategory: updatedTasks.length
+    });
   };
 
   // Toggle task completion (only owner)
   const handleToggleTask = async (catId: string, taskId: string) => {
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
+    const task = cat.tasks.find(t => t.id === taskId);
     const updatedTasks = cat.tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
     await updateDoc(doc(db, 'goals', catId), { tasks: updatedTasks });
     setCategories(categories.map(c => c.id === catId ? { ...c, tasks: updatedTasks } : c));
+    
+    // Track task completion toggle
+    Analytics.trackGoalEvent('Toggle Task', 'Task', {
+      categoryName: cat.category,
+      taskText: task?.text,
+      completed: !task?.completed
+    });
   };
 
   // Delete task (only owner)
   const handleDeleteTask = async (catId: string, taskId: string) => {
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
+    const task = cat.tasks.find(t => t.id === taskId);
     const updatedTasks = cat.tasks.filter(t => t.id !== taskId);
     // Reorder remaining tasks
     const reorderedTasks = updatedTasks.map((task, index) => ({ ...task, order: index }));
     await updateDoc(doc(db, 'goals', catId), { tasks: reorderedTasks });
     setCategories(categories.map(c => c.id === catId ? { ...c, tasks: reorderedTasks } : c));
+    
+    // Track task deletion
+    Analytics.trackGoalEvent('Delete Task', 'Task', {
+      categoryName: cat.category,
+      taskText: task?.text,
+      remainingTasksInCategory: reorderedTasks.length
+    });
   };
 
   // Delete category (only owner)
   const handleDeleteCategory = async (catId: string) => {
+    const cat = categories.find(c => c.id === catId);
     await deleteDoc(doc(db, 'goals', catId));
     const updatedCategories = categories.filter(c => c.id !== catId);
     // Reorder remaining categories
@@ -124,6 +175,13 @@ const GoalsPage: React.FC = () => {
     // Update order in database
     reorderedCategories.forEach(async (cat) => {
       await updateDoc(doc(db, 'goals', cat.id), { order: cat.order });
+    });
+    
+    // Track category deletion
+    Analytics.trackGoalEvent('Delete Category', 'Category', {
+      categoryName: cat?.category,
+      tasksInCategory: cat?.tasks.length || 0,
+      remainingCategories: reorderedCategories.length
     });
   };
 
@@ -138,6 +196,13 @@ const GoalsPage: React.FC = () => {
     await updateDoc(doc(db, 'goals', catId), { suggestions: updatedSuggestions });
     setCategories(categories.map(c => c.id === catId ? { ...c, suggestions: updatedSuggestions } : c));
     setSuggestions({ ...suggestions, [catId]: '' });
+    
+    // Track suggestion submission
+    Analytics.trackGoalEvent('Submit Suggestion', 'Suggestion', {
+      categoryName: cat.category,
+      suggestionText: text,
+      suggestedBy: user?.email || 'anonymous'
+    });
   };
 
   // Approve suggestion (only owner)
@@ -154,21 +219,42 @@ const GoalsPage: React.FC = () => {
     const updatedSuggestions = cat.suggestions.filter(s => s.id !== suggestion.id);
     await updateDoc(doc(db, 'goals', catId), { tasks: updatedTasks, suggestions: updatedSuggestions });
     setCategories(categories.map(c => c.id === catId ? { ...c, tasks: updatedTasks, suggestions: updatedSuggestions } : c));
+    
+    // Track suggestion approval
+    Analytics.trackGoalEvent('Approve Suggestion', 'Suggestion', {
+      categoryName: cat.category,
+      suggestionText: suggestion.text,
+      suggestedBy: suggestion.suggestedBy
+    });
   };
 
   // Delete suggestion (only owner)
   const handleDeleteSuggestion = async (catId: string, suggestionId: string) => {
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
+    const suggestion = cat.suggestions.find(s => s.id === suggestionId);
     const updatedSuggestions = cat.suggestions.filter(s => s.id !== suggestionId);
     await updateDoc(doc(db, 'goals', catId), { suggestions: updatedSuggestions });
     setCategories(categories.map(c => c.id === catId ? { ...c, suggestions: updatedSuggestions } : c));
+    
+    // Track suggestion deletion
+    Analytics.trackGoalEvent('Delete Suggestion', 'Suggestion', {
+      categoryName: cat.category,
+      suggestionText: suggestion?.text,
+      suggestedBy: suggestion?.suggestedBy
+    });
   };
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, type: 'category' | 'task', id: string, categoryId?: string) => {
     setDraggedItem({ type, id, categoryId });
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Track drag start
+    Analytics.trackGoalEvent('Start Drag', type === 'category' ? 'Category' : 'Task', {
+      itemId: id,
+      categoryId
+    });
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -199,6 +285,13 @@ const GoalsPage: React.FC = () => {
       reorderedCategories.forEach(async (cat) => {
         await updateDoc(doc(db, 'goals', cat.id), { order: cat.order });
       });
+      
+      // Track category reorder
+      Analytics.trackGoalEvent('Reorder Category', 'Category', {
+        categoryName: draggedCategory.category,
+        fromIndex: draggedIndex,
+        toIndex: targetIndex
+      });
     } else if (draggedItem.type === 'task' && targetType === 'task' && draggedItem.categoryId === targetCategoryId && targetCategoryId) {
       // Reorder tasks within the same category
       const category = categories.find(c => c.id === targetCategoryId);
@@ -221,6 +314,14 @@ const GoalsPage: React.FC = () => {
       
       // Update in database
       await updateDoc(doc(db, 'goals', targetCategoryId), { tasks: reorderedTasks });
+      
+      // Track task reorder
+      Analytics.trackGoalEvent('Reorder Task', 'Task', {
+        categoryName: category.category,
+        taskText: draggedTask.text,
+        fromIndex: draggedIndex,
+        toIndex: targetIndex
+      });
     }
 
     setDraggedItem(null);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Container, 
   Typography, 
@@ -23,6 +23,7 @@ import {
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { useAuth } from '../components/AuthContext';
 import { callClaude } from '../claudeApi';
+import { Analytics } from '../mixpanel';
 
 interface QuizQuestion {
   id: string;
@@ -75,16 +76,35 @@ const QuizGenerator: React.FC = () => {
     'Harvard'
   ];
 
+  // Track page load
+  useEffect(() => {
+    Analytics.trackFeatureUsage('Quiz Generator', {
+      hasQuiz: !!quiz,
+      hasResults: quizResults.length > 0
+    });
+  }, [quiz, quizResults.length]);
+
   // 1. Generate Quiz (questions only, no explanations)
   const generateQuiz = async () => {
     if (!notes.trim()) {
       setError('Please provide your notes to generate a quiz.');
+      Analytics.trackQuizEvent('Generate Quiz Attempt', {
+        error: 'No notes provided',
+        difficulty
+      });
       return;
     }
 
     setIsGenerating(true);
     setError('');
     setSuccess('');
+
+    // Track quiz generation attempt
+    Analytics.trackQuizEvent('Generate Quiz Attempt', {
+      notesLength: notes.length,
+      difficulty,
+      difficultyLabel: difficultyLabels[difficulty]
+    });
 
     try {
       const prompt = `Create a quiz based on the following notes. Return ONLY valid JSON, no explanations, markdown, or extra text. Limit the quiz to 5 questions. Each question should be either multiple choice (with 3-4 options) or short answer. For each question, include: id, type, question, options (if multiple choice), and correctAnswer. Do NOT include explanations or grading.
@@ -126,6 +146,10 @@ ${notes}`;
       } catch (parseError) {
         console.error('Claude raw response:', response);
         setError('Failed to generate quiz. Please try again.');
+        Analytics.trackError('Quiz Generation Parse Error', {
+          error: parseError instanceof Error ? parseError.message : 'Unknown error',
+          difficulty
+        });
         return;
       }
 
@@ -140,9 +164,23 @@ ${notes}`;
       setUserAnswers({});
       setQuizResults([]);
       setSuccess('Quiz generated successfully!');
+      
+      // Track successful quiz generation
+      Analytics.trackQuizEvent('Generate Quiz Success', {
+        quizTitle: quizData.title,
+        questionCount: quizData.questions.length,
+        difficulty,
+        difficultyLabel: difficultyLabels[difficulty],
+        hasMultipleChoice: quizData.questions.some((q: any) => q.type === 'multiple_choice'),
+        hasShortAnswer: quizData.questions.some((q: any) => q.type === 'short_answer')
+      });
     } catch (err) {
       console.error('Error generating quiz:', err);
       setError('Failed to generate quiz. Please try again.');
+      Analytics.trackError('Quiz Generation Error', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        difficulty
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -155,12 +193,24 @@ ${notes}`;
     const unansweredQuestions = quiz.questions.filter(q => !userAnswers[q.id]);
     if (unansweredQuestions.length > 0) {
       setError('Please answer all questions before submitting.');
+      Analytics.trackQuizEvent('Grade Quiz Attempt', {
+        error: 'Unanswered questions',
+        unansweredCount: unansweredQuestions.length,
+        totalQuestions: quiz.questions.length
+      });
       return;
     }
 
     setIsGrading(true);
     setError('');
     setSuccess('');
+
+    // Track quiz grading attempt
+    Analytics.trackQuizEvent('Grade Quiz Attempt', {
+      quizTitle: quiz.title,
+      questionCount: quiz.questions.length,
+      answeredQuestions: Object.keys(userAnswers).length
+    });
 
     try {
       // Prepare grading data
@@ -187,14 +237,34 @@ ${notes}`;
       } catch (parseError) {
         console.error('Claude raw response:', response);
         setError('Failed to grade quiz. Please try again.');
+        Analytics.trackError('Quiz Grading Parse Error', {
+          error: parseError instanceof Error ? parseError.message : 'Unknown error'
+        });
         return;
       }
 
       setQuizResults(results);
       setSuccess('Quiz graded successfully!');
+      
+      // Track successful quiz grading
+      const totalScore = results.reduce((sum: number, result: QuizResult) => sum + result.points, 0);
+      const maxScore = results.reduce((sum: number, result: QuizResult) => sum + result.maxPoints, 0);
+      const scorePercentage = (totalScore / maxScore) * 100;
+      
+      Analytics.trackQuizEvent('Grade Quiz Success', {
+        quizTitle: quiz.title,
+        totalScore,
+        maxScore,
+        scorePercentage: Math.round(scorePercentage),
+        questionCount: results.length,
+        perfectScore: scorePercentage === 100
+      });
     } catch (err) {
       console.error('Error grading quiz:', err);
       setError('Failed to grade quiz. Please try again.');
+      Analytics.trackError('Quiz Grading Error', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
     } finally {
       setIsGrading(false);
     }
@@ -205,6 +275,24 @@ ${notes}`;
       ...prev,
       [questionId]: answer
     }));
+    
+    // Track answer changes
+    Analytics.trackQuizEvent('Answer Changed', {
+      questionId,
+      answerLength: answer.length,
+      hasAnswer: !!answer.trim()
+    });
+  };
+
+  const handleDifficultyChange = (event: Event, newValue: number | number[]) => {
+    const difficultyValue = newValue as number;
+    setDifficulty(difficultyValue);
+    
+    // Track difficulty change
+    Analytics.trackQuizEvent('Difficulty Changed', {
+      difficulty: difficultyValue,
+      difficultyLabel: difficultyLabels[difficultyValue]
+    });
   };
 
   const calculateTotalScore = () => {
@@ -297,7 +385,7 @@ ${notes}`;
               { value: 9, label: 'Genius' },
               { value: 10, label: 'Harvard' }
             ]}
-            onChange={(_, value) => setDifficulty(value as number)}
+            onChange={handleDifficultyChange}
             valueLabelDisplay="auto"
           />
         </Box>

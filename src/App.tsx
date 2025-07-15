@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Header from './components/Header';
@@ -12,7 +12,9 @@ import GoalsPage from './pages/GoalsPage';
 import ResumeObjective from './pages/ResumeObjective';
 import JobSearchTracker from './pages/JobSearchTracker';
 import QuizGenerator from './pages/QuizGenerator';
+import Resources from './pages/Resources';
 import { AuthProvider } from './components/AuthContext';
+import { Analytics } from './mixpanel';
 
 const theme = createTheme({
   palette: {
@@ -33,12 +35,35 @@ const theme = createTheme({
   },
 });
 
+// Component to track page views
+const PageTracker: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Track page view
+    Analytics.trackPageView(location.pathname);
+    
+    // Track specific page events
+    const pageName = location.pathname === '/' ? 'Home' : 
+                    location.pathname.slice(1).charAt(0).toUpperCase() + location.pathname.slice(2);
+    
+    Analytics.trackEvent('Page Visited', {
+      page: pageName,
+      path: location.pathname,
+      search: location.search
+    });
+  }, [location]);
+
+  return null;
+};
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
         <Router>
+          <PageTracker />
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
@@ -50,6 +75,7 @@ function App() {
             <Route path="/resume" element={<ResumeObjective />} />
             <Route path="/tracker" element={<JobSearchTracker />} />
             <Route path="/quiz" element={<QuizGenerator />} />
+            <Route path="/resources" element={<Resources />} />
           </Routes>
         </Router>
       </AuthProvider>
