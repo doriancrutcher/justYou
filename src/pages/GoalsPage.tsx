@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Button, TextField, Checkbox, List, ListItem, ListItemText, IconButton, Divider, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { collection, getDocs, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, deleteDoc, doc, setDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../components/AuthContext';
 import { Analytics } from '../mixpanel';
@@ -25,11 +25,11 @@ interface GoalCategory {
   tasks: Task[];
   suggestions: Suggestion[];
   order: number;
+  userId: string; // Add user ID to tie goals to specific user
 }
 
 const GoalsPage: React.FC = () => {
-  const { user } = useAuth();
-  const isOwner = user?.email === process.env.REACT_APP_ADMIN_EMAIL;
+  const { user, signInWithGoogle } = useAuth();
   const [categories, setCategories] = useState<GoalCategory[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newTask, setNewTask] = useState<{ [catId: string]: string }>({});
@@ -40,16 +40,26 @@ const GoalsPage: React.FC = () => {
   // Track page load
   useEffect(() => {
     Analytics.trackFeatureUsage('Goals Page', {
-      isOwner,
+      isAuthenticated: !!user,
       categoriesCount: categories.length
     });
-  }, [isOwner, categories.length]);
+  }, [user, categories.length]);
 
-  // Fetch categories from Firestore
+  // Fetch categories from Firestore - only for authenticated user
   const fetchCategories = async () => {
+    if (!user) {
+      setCategories([]);
+      return;
+    }
+
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'goals'));
+      // Query goals for the current user only
+      const goalsQuery = query(
+        collection(db, 'goals'),
+        where('userId', '==', user.uid)
+      );
+      const querySnapshot = await getDocs(goalsQuery);
       const cats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GoalCategory[];
       // Sort by order if it exists, otherwise by creation time
       const sortedCats = cats.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -57,12 +67,14 @@ const GoalsPage: React.FC = () => {
       
       // Track successful fetch
       Analytics.trackGoalEvent('Fetch Categories', 'Success', {
-        categoriesCount: sortedCats.length
+        categoriesCount: sortedCats.length,
+        userId: user.uid
       });
     } catch (error) {
       console.error('Error fetching goals:', error);
       Analytics.trackError('Fetch Goals Error', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: user?.uid
       });
     } finally {
       setLoading(false);
@@ -71,12 +83,13 @@ const GoalsPage: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [user]); // Re-fetch when user changes
 
-  // Add new category
+  // Add new category - only for authenticated users
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCategory.trim()) return;
+    if (!user || !newCategory.trim()) return;
+    
     try {
       const newCat: GoalCategory = {
         id: uuidv4(),
@@ -84,6 +97,7 @@ const GoalsPage: React.FC = () => {
         tasks: [],
         suggestions: [],
         order: categories.length,
+        userId: user.uid, // Tie to current user
       };
       await setDoc(doc(db, 'goals', newCat.id), newCat);
       setCategories([...categories, newCat]);
@@ -92,19 +106,23 @@ const GoalsPage: React.FC = () => {
       // Track category creation
       Analytics.trackGoalEvent('Create Category', 'Category', {
         categoryName: newCategory,
-        totalCategories: categories.length + 1
+        totalCategories: categories.length + 1,
+        userId: user.uid
       });
     } catch (error) {
       console.error('Error adding category:', error);
       Analytics.trackError('Create Category Error', {
         categoryName: newCategory,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: user?.uid
       });
     }
   };
 
-  // Add new task (only owner)
+  // Add new task - only for authenticated users
   const handleAddTask = async (catId: string) => {
+    if (!user) return;
+    
     const text = newTask[catId]?.trim();
     if (!text) return;
     const cat = categories.find(c => c.id === catId);
@@ -124,12 +142,15 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Create Task', 'Task', {
       categoryName: cat.category,
       taskText: text,
-      totalTasksInCategory: updatedTasks.length
+      totalTasksInCategory: updatedTasks.length,
+      userId: user.uid
     });
   };
 
-  // Toggle task completion (only owner)
+  // Toggle task completion - only for authenticated users
   const handleToggleTask = async (catId: string, taskId: string) => {
+    if (!user) return;
+    
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
     const task = cat.tasks.find(t => t.id === taskId);
@@ -141,12 +162,15 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Toggle Task', 'Task', {
       categoryName: cat.category,
       taskText: task?.text,
-      completed: !task?.completed
+      completed: !task?.completed,
+      userId: user.uid
     });
   };
 
-  // Delete task (only owner)
+  // Delete task - only for authenticated users
   const handleDeleteTask = async (catId: string, taskId: string) => {
+    if (!user) return;
+    
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
     const task = cat.tasks.find(t => t.id === taskId);
@@ -160,12 +184,15 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Delete Task', 'Task', {
       categoryName: cat.category,
       taskText: task?.text,
-      remainingTasksInCategory: reorderedTasks.length
+      remainingTasksInCategory: reorderedTasks.length,
+      userId: user.uid
     });
   };
 
-  // Delete category (only owner)
+  // Delete category - only for authenticated users
   const handleDeleteCategory = async (catId: string) => {
+    if (!user) return;
+    
     const cat = categories.find(c => c.id === catId);
     await deleteDoc(doc(db, 'goals', catId));
     const updatedCategories = categories.filter(c => c.id !== catId);
@@ -181,17 +208,20 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Delete Category', 'Category', {
       categoryName: cat?.category,
       tasksInCategory: cat?.tasks.length || 0,
-      remainingCategories: reorderedCategories.length
+      remainingCategories: reorderedCategories.length,
+      userId: user.uid
     });
   };
 
-  // Suggest a goal (anyone but owner)
+  // Suggest a goal - only for authenticated users
   const handleSuggest = async (catId: string) => {
+    if (!user) return;
+    
     const text = suggestions[catId]?.trim();
-    if (!text || isOwner) return;
+    if (!text) return;
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
-    const newSuggestion: Suggestion = { id: uuidv4(), text, suggestedBy: user?.email || 'anonymous' };
+    const newSuggestion: Suggestion = { id: uuidv4(), text, suggestedBy: user.email || 'anonymous' };
     const updatedSuggestions = [...cat.suggestions, newSuggestion];
     await updateDoc(doc(db, 'goals', catId), { suggestions: updatedSuggestions });
     setCategories(categories.map(c => c.id === catId ? { ...c, suggestions: updatedSuggestions } : c));
@@ -201,12 +231,15 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Submit Suggestion', 'Suggestion', {
       categoryName: cat.category,
       suggestionText: text,
-      suggestedBy: user?.email || 'anonymous'
+      suggestedBy: user.email || 'anonymous',
+      userId: user.uid
     });
   };
 
-  // Approve suggestion (only owner)
+  // Approve suggestion - only for authenticated users
   const handleApproveSuggestion = async (catId: string, suggestion: Suggestion) => {
+    if (!user) return;
+    
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
     const newTask: Task = { 
@@ -224,12 +257,15 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Approve Suggestion', 'Suggestion', {
       categoryName: cat.category,
       suggestionText: suggestion.text,
-      suggestedBy: suggestion.suggestedBy
+      suggestedBy: suggestion.suggestedBy,
+      userId: user.uid
     });
   };
 
-  // Delete suggestion (only owner)
+  // Delete suggestion - only for authenticated users
   const handleDeleteSuggestion = async (catId: string, suggestionId: string) => {
+    if (!user) return;
+    
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
     const suggestion = cat.suggestions.find(s => s.id === suggestionId);
@@ -241,19 +277,23 @@ const GoalsPage: React.FC = () => {
     Analytics.trackGoalEvent('Delete Suggestion', 'Suggestion', {
       categoryName: cat.category,
       suggestionText: suggestion?.text,
-      suggestedBy: suggestion?.suggestedBy
+      suggestedBy: suggestion?.suggestedBy,
+      userId: user.uid
     });
   };
 
-  // Drag and drop handlers
+  // Drag and drop handlers - only for authenticated users
   const handleDragStart = (e: React.DragEvent, type: 'category' | 'task', id: string, categoryId?: string) => {
+    if (!user) return;
+    
     setDraggedItem({ type, id, categoryId });
     e.dataTransfer.effectAllowed = 'move';
     
     // Track drag start
     Analytics.trackGoalEvent('Start Drag', type === 'category' ? 'Category' : 'Task', {
       itemId: id,
-      categoryId
+      categoryId,
+      userId: user.uid
     });
   };
 
@@ -264,7 +304,7 @@ const GoalsPage: React.FC = () => {
 
   const handleDrop = async (e: React.DragEvent, targetType: 'category' | 'task', targetId: string, targetCategoryId?: string) => {
     e.preventDefault();
-    if (!draggedItem || !isOwner) return;
+    if (!draggedItem || !user) return;
 
     if (draggedItem.type === 'category' && targetType === 'category') {
       // Reorder categories
@@ -290,7 +330,8 @@ const GoalsPage: React.FC = () => {
       Analytics.trackGoalEvent('Reorder Category', 'Category', {
         categoryName: draggedCategory.category,
         fromIndex: draggedIndex,
-        toIndex: targetIndex
+        toIndex: targetIndex,
+        userId: user.uid
       });
     } else if (draggedItem.type === 'task' && targetType === 'task' && draggedItem.categoryId === targetCategoryId && targetCategoryId) {
       // Reorder tasks within the same category
@@ -320,7 +361,8 @@ const GoalsPage: React.FC = () => {
         categoryName: category.category,
         taskText: draggedTask.text,
         fromIndex: draggedIndex,
-        toIndex: targetIndex
+        toIndex: targetIndex,
+        userId: user.uid
       });
     }
 
@@ -331,24 +373,46 @@ const GoalsPage: React.FC = () => {
     setDraggedItem(null);
   };
 
+  // Show sign-in prompt if not authenticated
+  if (!user) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Your Personal Goals
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            Sign in to access your personal goal tracking and management features.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={signInWithGoogle}
+            sx={{ borderRadius: 2, textTransform: 'none', px: 4, py: 1.5 }}
+          >
+            Sign in to Access Goals
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Goals
+        Your Goals
       </Typography>
-      {isOwner && (
-        <Box component="form" onSubmit={handleAddCategory} sx={{ display: 'flex', mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Add a new category"
-            value={newCategory}
-            onChange={e => setNewCategory(e.target.value)}
-          />
-          <Button type="submit" variant="contained" sx={{ ml: 2 }}>
-            Add Category
-          </Button>
-        </Box>
-      )}
+      <Box component="form" onSubmit={handleAddCategory} sx={{ display: 'flex', mb: 3 }}>
+        <TextField
+          fullWidth
+          label="Add a new category"
+          value={newCategory}
+          onChange={e => setNewCategory(e.target.value)}
+        />
+        <Button type="submit" variant="contained" sx={{ ml: 2 }}>
+          Add Category
+        </Button>
+      </Box>
       
       {categories.map((cat, catIndex) => (
         <Paper 
@@ -357,23 +421,19 @@ const GoalsPage: React.FC = () => {
             mb: 4, 
             p: 2,
             opacity: draggedItem?.type === 'category' && draggedItem.id === cat.id ? 0.5 : 1,
-            cursor: isOwner ? 'grab' : 'default',
-            '&:active': { cursor: isOwner ? 'grabbing' : 'default' }
+            cursor: 'grab',
+            '&:active': { cursor: 'grabbing' }
           }}
-          draggable={isOwner}
+          draggable
           onDragStart={(e) => handleDragStart(e, 'category', cat.id)}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'category', cat.id)}
           onDragEnd={handleDragEnd}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            {isOwner && (
-              <DragIndicatorIcon sx={{ mr: 1, color: 'text.secondary', cursor: 'grab' }} />
-            )}
+            <DragIndicatorIcon sx={{ mr: 1, color: 'text.secondary', cursor: 'grab' }} />
             <Typography variant="h6" sx={{ flexGrow: 1 }}>{cat.category}</Typography>
-            {isOwner && (
-              <IconButton onClick={() => handleDeleteCategory(cat.id)}><DeleteIcon /></IconButton>
-            )}
+            <IconButton onClick={() => handleDeleteCategory(cat.id)}><DeleteIcon /></IconButton>
           </Box>
           <Divider sx={{ mb: 2 }} />
           
@@ -389,22 +449,19 @@ const GoalsPage: React.FC = () => {
                 border: '1px solid transparent',
                 borderRadius: 1,
                 opacity: draggedItem?.type === 'task' && draggedItem.id === task.id ? 0.5 : 1,
-                cursor: isOwner ? 'grab' : 'default',
-                '&:active': { cursor: isOwner ? 'grabbing' : 'default' }
+                cursor: 'grab',
+                '&:active': { cursor: 'grabbing' }
               }}
-              draggable={isOwner}
+              draggable
               onDragStart={(e) => handleDragStart(e, 'task', task.id, cat.id)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, 'task', task.id, cat.id)}
               onDragEnd={handleDragEnd}
             >
-              {isOwner && (
-                <DragIndicatorIcon sx={{ mr: 1, color: 'text.secondary', cursor: 'grab' }} />
-              )}
+              <DragIndicatorIcon sx={{ mr: 1, color: 'text.secondary', cursor: 'grab' }} />
               <Checkbox 
                 checked={task.completed} 
                 onChange={() => handleToggleTask(cat.id, task.id)}
-                disabled={!isOwner}
               />
               <Box sx={{ flexGrow: 1 }}>
                 <Typography 
@@ -416,47 +473,31 @@ const GoalsPage: React.FC = () => {
                   {task.text}
                 </Typography>
               </Box>
-              {isOwner && (
-                <IconButton 
-                  edge="end" 
-                  aria-label="delete" 
-                  onClick={() => handleDeleteTask(cat.id, task.id)}
-                  size="small"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              )}
+              <IconButton 
+                edge="end" 
+                aria-label="delete" 
+                onClick={() => handleDeleteTask(cat.id, task.id)}
+                size="small"
+              >
+                <DeleteIcon />
+              </IconButton>
             </Box>
           ))}
           
-          {isOwner ? (
-            <Box sx={{ display: 'flex', mt: 1 }}>
-              <TextField
-                fullWidth
-                label="Add a new goal"
-                value={newTask[cat.id] || ''}
-                onChange={e => setNewTask({ ...newTask, [cat.id]: e.target.value })}
-              />
-              <Button variant="contained" sx={{ ml: 2 }} onClick={() => handleAddTask(cat.id)}>
-                Add Goal
-              </Button>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', mt: 1 }}>
-              <TextField
-                fullWidth
-                label="Suggest a goal"
-                value={suggestions[cat.id] || ''}
-                onChange={e => setSuggestions({ ...suggestions, [cat.id]: e.target.value })}
-              />
-              <Button variant="contained" sx={{ ml: 2 }} onClick={() => handleSuggest(cat.id)}>
-                Suggest
-              </Button>
-            </Box>
-          )}
+          <Box sx={{ display: 'flex', mt: 1 }}>
+            <TextField
+              fullWidth
+              label="Add a new goal"
+              value={newTask[cat.id] || ''}
+              onChange={e => setNewTask({ ...newTask, [cat.id]: e.target.value })}
+            />
+            <Button variant="contained" sx={{ ml: 2 }} onClick={() => handleAddTask(cat.id)}>
+              Add Goal
+            </Button>
+          </Box>
           
-          {/* Suggestions List (only owner) */}
-          {isOwner && cat.suggestions.length > 0 && (
+          {/* Suggestions List */}
+          {cat.suggestions.length > 0 && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle1">Suggestions:</Typography>
               <List>
@@ -480,13 +521,22 @@ const GoalsPage: React.FC = () => {
       
       {loading && <Typography sx={{ mt: 2 }}>Loading...</Typography>}
       
-      {isOwner && categories.length > 0 && (
-        <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+      {categories.length === 0 && !loading && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No goals yet
+          </Typography>
           <Typography variant="body2" color="text.secondary">
-            💡 <strong>Tip:</strong> Drag and drop categories and goals to reorder them. Only you can reorder items.
+            Create your first category to get started with goal tracking.
           </Typography>
         </Box>
       )}
+      
+      <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+        <Typography variant="body2" color="text.secondary">
+          💡 <strong>Tip:</strong> Drag and drop categories and goals to reorder them.
+        </Typography>
+      </Box>
     </Container>
   );
 };
