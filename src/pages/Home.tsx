@@ -378,37 +378,7 @@ const Home: React.FC = () => {
       </Box>
 
       {/* Quick Stats Section */}
-      <Paper elevation={2} sx={{ p: 3, mt: 4, backgroundColor: '#f8f9fa' }}>
-        <Typography variant="h6" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-          🎯 Your Career Journey
-        </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
-          <Box sx={{ textAlign: 'center', p: 2 }}>
-            <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-              ∞
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Opportunities Ahead
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'center', p: 2 }}>
-            <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-              💪
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Growth Mindset
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'center', p: 2 }}>
-            <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-              🚀
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Career Success
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+
     </Container>
   );
 };
