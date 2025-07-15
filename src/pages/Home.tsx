@@ -13,7 +13,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Link,
-  IconButton
+  IconButton,
+  Grid
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { 
@@ -25,12 +26,36 @@ import {
   School as SchoolIcon,
   ExpandMore as ExpandMoreIcon,
   PlayArrow as PlayArrowIcon,
-  Link as LinkIcon
+  Link as LinkIcon,
+  CheckCircle as CheckCircleIcon,
+  Psychology as PsychologyIcon,
+  AutoStories as AutoStoriesIcon
 } from '@mui/icons-material';
 import { useAuth } from '../components/AuthContext';
 
 const Home: React.FC = () => {
   const { user, signInWithGoogle } = useAuth();
+
+  const valuePropositions = [
+    {
+      icon: <CheckCircleIcon sx={{ fontSize: 48, color: '#2e7d32' }} />,
+      title: "Track and Achieve Career Goals",
+      description: "Stay focused with personalized goals, progress tracking, and a clear, actionable dashboard.",
+      features: ["Smart goal setting", "Progress visualization", "Milestone tracking", "Actionable insights"]
+    },
+    {
+      icon: <PsychologyIcon sx={{ fontSize: 48, color: '#1976d2' }} />,
+      title: "Train Smarter with AI-Powered Quizzes",
+      description: "Turn your notes into quizzes to sharpen your skills and prep for interviews with confidence.",
+      features: ["AI-generated questions", "Custom difficulty levels", "Instant feedback", "Interview prep"]
+    },
+    {
+      icon: <AutoStoriesIcon sx={{ fontSize: 48, color: '#ed6c02' }} />,
+      title: "Build Your Story, Boost Your Impact",
+      description: "Manage applications, draft resumes, log your job search, and transform stories into targeted cover letters — all in one place.",
+      features: ["Story management", "Resume building", "Application tracking", "Cover letter generation"]
+    }
+  ];
 
   const dailyRules = [
     {
@@ -140,22 +165,157 @@ const Home: React.FC = () => {
   if (!user) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Welcome to JobGoalz
-        </Typography>
-        <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Your comprehensive career development platform
-        </Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Button
-            color="primary"
-            variant="contained"
-            size="large"
-            onClick={signInWithGoogle}
-            sx={{ borderRadius: 2, textTransform: 'none', px: 4, py: 1.5 }}
-          >
-            Sign in to Get Started
-          </Button>
+        {/* Hero Section */}
+        <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Typography variant="h3" component="h1" gutterBottom sx={{ 
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 4
+          }}>
+            Welcome to JobGoalz
+          </Typography>
+          
+          <Typography variant="h6" color="text.secondary" sx={{ 
+            mb: 6, 
+            maxWidth: 600, 
+            mx: 'auto',
+            lineHeight: 1.6,
+            fontSize: '1.1rem'
+          }}>
+            I made this to consolidate all of what I learned about the job search in the age of AI into one location
+          </Typography>
+
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            gap: 1,
+            mb: 6
+          }}>
+            <Typography variant="body1" color="text.secondary" sx={{ 
+              fontSize: '0.9rem',
+              opacity: 0.7
+            }}>
+              Created by
+            </Typography>
+            <Typography variant="h5" sx={{ 
+              fontFamily: '"Dancing Script", cursive',
+              fontWeight: 'bold',
+              color: '#1976d2',
+              transform: 'rotate(-2deg)',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+              letterSpacing: '0.5px'
+            }}>
+              Dorian Crutcher
+            </Typography>
+          </Box>
+          
+          
+          {/* Value Propositions */}
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 4, 
+            mb: 6 
+          }}>
+            {valuePropositions.map((proposition, index) => (
+              <Card key={index} sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                p: 3,
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.15)'
+                }
+              }}>
+                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                  {proposition.icon}
+                </Box>
+                <Typography variant="h6" component="h3" gutterBottom sx={{ 
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  mb: 2
+                }}>
+                  {proposition.title}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ 
+                  textAlign: 'center',
+                  mb: 3,
+                  flexGrow: 1
+                }}>
+                  {proposition.description}
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {proposition.features.map((feature, featureIndex) => (
+                    <Box key={featureIndex} sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1,
+                      fontSize: '0.875rem',
+                      color: 'text.secondary'
+                    }}>
+                      <Box sx={{ 
+                        width: 6, 
+                        height: 6, 
+                        borderRadius: '50%', 
+                        backgroundColor: 'primary.main',
+                        flexShrink: 0
+                      }} />
+                      {feature}
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            ))}
+          </Box>
+
+          {/* CTA Section */}
+          <Box sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: 4,
+            p: 4,
+            mb: 4,
+            color: 'white'
+          }}>
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Ready to Transform Your Career?
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
+              Join thousands of professionals who are already using JobGoalz to accelerate their career development
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={signInWithGoogle}
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none', 
+                px: 4, 
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                backgroundColor: 'white',
+                color: '#667eea',
+                '&:hover': {
+                  backgroundColor: '#f5f5f5',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.2)'
+                },
+                transition: 'all 0.3s ease-in-out'
+              }}
+            >
+              Sign in with Google to Get Started
+            </Button>
+          </Box>
+
+
         </Box>
       </Container>
     );
