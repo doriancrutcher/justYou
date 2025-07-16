@@ -205,18 +205,34 @@ const Home: React.FC = () => {
               rel="noopener noreferrer"
               sx={{ 
                 textDecoration: 'none',
-                '&:hover': { 
-                  opacity: 0.8,
-                  transform: 'scale(1.02)'
+                transition: 'all 0.2s ease-in-out',
+                '@keyframes wiggle': {
+                  '0%, 100%': {
+                    transform: 'rotate(-2deg)'
+                  },
+                  '25%': {
+                    transform: 'rotate(-1deg)'
+                  },
+                  '50%': {
+                    transform: 'rotate(-3deg)'
+                  },
+                  '75%': {
+                    transform: 'rotate(-1deg)'
+                  }
                 },
-                transition: 'all 0.2s ease-in-out'
+                animation: 'wiggle 3s ease-in-out infinite',
+                animationDelay: '2s',
+                '&:hover': {
+                  opacity: 0.8,
+                  animation: 'none',
+                  transform: 'scale(1.02) rotate(-2deg)'
+                }
               }}
             >
               <Typography variant="h5" sx={{ 
                 fontFamily: '"Dancing Script", cursive',
                 fontWeight: 'bold',
                 color: '#1976d2',
-                transform: 'rotate(-2deg)',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
                 letterSpacing: '0.5px',
                 cursor: 'pointer'
