@@ -74,15 +74,6 @@ const Header: React.FC = () => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem disabled>{user.displayName}</MenuItem>
-                  <MenuItem 
-                    component={Link}
-                    href="https://www.linkedin.com/in/dorian-crutcher/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ textDecoration: 'none', color: 'inherit' }}
-                  >
-                    Connect on LinkedIn
-                  </MenuItem>
                   <MenuItem onClick={signOutUser}>Sign Out</MenuItem>
                 </Menu>
               </>
