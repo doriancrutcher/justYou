@@ -363,8 +363,9 @@ const Home: React.FC = () => {
               backgroundColor: 'transparent',
               boxShadow: 'none',
               '&:before': { display: 'none' },
-              '&.Mui-expanded': { margin: 0 }
-            }}>
+              '&.Mui-expanded': { margin: 0 }, 
+              padding: 1
+            }} >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 sx={{ 

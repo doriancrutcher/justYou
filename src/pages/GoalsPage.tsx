@@ -378,14 +378,14 @@ const GoalsPage: React.FC = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Your Goals
       </Typography>
-      <Box component="form" onSubmit={handleAddCategory} sx={{ display: 'flex', mb: 3 }}>
+      <Box component="form" onSubmit={handleAddCategory} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 }, mb: 3 }}>
         <TextField
           fullWidth
           label="Add a new category"
           value={newCategory}
           onChange={e => setNewCategory(e.target.value)}
         />
-        <Button type="submit" variant="contained" sx={{ ml: 2 }}>
+        <Button type="submit" variant="contained" sx={{ ml: { xs: 0, sm: 2 }, minWidth: { xs: '100%', sm: 'auto' } }}>
           Add Category
         </Button>
       </Box>
@@ -460,14 +460,14 @@ const GoalsPage: React.FC = () => {
             </Box>
           ))}
           
-          <Box sx={{ display: 'flex', mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 }, mt: 1 }}>
             <TextField
               fullWidth
               label="Add a new goal"
               value={newTask[cat.id] || ''}
               onChange={e => setNewTask({ ...newTask, [cat.id]: e.target.value })}
             />
-            <Button variant="contained" sx={{ ml: 2 }} onClick={() => handleAddTask(cat.id)}>
+            <Button variant="contained" sx={{ ml: { xs: 0, sm: 2 }, minWidth: { xs: '100%', sm: 'auto' } }} onClick={() => handleAddTask(cat.id)}>
               Add Goal
             </Button>
           </Box>

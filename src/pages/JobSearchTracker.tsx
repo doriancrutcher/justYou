@@ -341,8 +341,8 @@ const JobSearchTracker: React.FC = () => {
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Box sx={{ flex: '1 1 300px' }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+              <Box sx={{ flex: { xs: 'none', md: '1 1 300px' } }}>
                 <FormControl fullWidth>
                   <InputLabel>Activity Type</InputLabel>
                   <Select
@@ -355,7 +355,7 @@ const JobSearchTracker: React.FC = () => {
                   </Select>
                 </FormControl>
               </Box>
-              <Box sx={{ flex: '1 1 300px' }}>
+              <Box sx={{ flex: { xs: 'none', md: '1 1 300px' } }}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
                   <Select
@@ -409,8 +409,8 @@ const JobSearchTracker: React.FC = () => {
                   placeholder="0"
                 />
               ) : (
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+                  <Box sx={{ flex: { xs: 'none', md: 1 } }}>
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       Start Time *
                     </Typography>
@@ -432,7 +432,7 @@ const JobSearchTracker: React.FC = () => {
                       fullWidth
                     />
                   </Box>
-                  <Box sx={{ flex: 1 }}>
+                  <Box sx={{ flex: { xs: 'none', md: 1 } }}>
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       End Time *
                     </Typography>
@@ -454,7 +454,7 @@ const JobSearchTracker: React.FC = () => {
                       fullWidth
                     />
                   </Box>
-                  <Box sx={{ width: 160 }}>
+                  <Box sx={{ width: { xs: '100%', md: 160 } }}>
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       Minutes Calculated
                     </Typography>
@@ -495,7 +495,7 @@ const JobSearchTracker: React.FC = () => {
             {activities.map((activity) => (
               <Card key={activity.id} elevation={1}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'flex-start' }, mb: 1, gap: { xs: 2, md: 0 } }}>
                     <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="h6" gutterBottom>
                         {activity.title}
@@ -526,7 +526,7 @@ const JobSearchTracker: React.FC = () => {
                         />
                       </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-end', md: 'flex-start' } }}>
                       <IconButton 
                         size="small" 
                         onClick={() => handleEdit(activity)}

@@ -141,7 +141,7 @@ Please provide only the modified objective without any explanations.`;
           </Alert>
         )}
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
           <Button
             variant="contained"
             color="primary"
@@ -149,6 +149,7 @@ Please provide only the modified objective without any explanations.`;
             onClick={handleGenerateObjective}
             disabled={isLoading || !jobDescription.trim() || !currentObjective.trim()}
             startIcon={isLoading ? <CircularProgress size={20} /> : null}
+            sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
           >
             {isLoading ? 'Generating...' : 'Generate Modified Objective'}
           </Button>
@@ -157,6 +158,7 @@ Please provide only the modified objective without any explanations.`;
             variant="outlined"
             onClick={handleClear}
             disabled={isLoading}
+            sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
           >
             Clear All
           </Button>
@@ -179,11 +181,12 @@ Please provide only the modified objective without any explanations.`;
               }}>
                 {modifiedObjective}
               </Typography>
-              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: { xs: 'center', sm: 'flex-start' } }}>
                 <Button
                   variant="outlined"
                   size="small"
                   onClick={handleCopyToClipboard}
+                  sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
                 >
                   Copy to Clipboard
                 </Button>
