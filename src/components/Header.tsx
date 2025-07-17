@@ -1,10 +1,13 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Container, Box, Avatar, IconButton, Menu, MenuItem, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { useAuth } from './AuthContext';
+import { useTheme } from './ThemeContext';
 
 const Header: React.FC = () => {
   const { user, signInWithGoogle, signOutUser } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -60,6 +63,16 @@ const Header: React.FC = () => {
 
           {/* Right: Auth Buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Dark Mode Toggle */}
+            <IconButton 
+              onClick={toggleTheme} 
+              color="inherit"
+              sx={{ mr: 1 }}
+              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+            
             {user ? (
               <>
                 <IconButton onClick={handleMenu} size="small" sx={{ ml: 1 }}>

@@ -310,7 +310,7 @@ const JobSearchTracker: React.FC = () => {
       )}
 
       {/* Today's Summary */}
-      <Paper elevation={2} sx={{ p: 3, mb: 3, backgroundColor: '#f8f9fa' }}>
+      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Today's Summary
         </Typography>

@@ -177,7 +177,7 @@ const Resources: React.FC = () => {
       </Typography>
 
       {/* Daily Study Tips */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4, backgroundColor: '#f8f9fa' }}>
+      <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" component="h2" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
           💡 Daily Study Tips
         </Typography>
@@ -310,7 +310,7 @@ const Resources: React.FC = () => {
       </Box>
 
       {/* Quick Actions */}
-      <Paper elevation={2} sx={{ p: 3, mt: 4, backgroundColor: '#f8f9fa' }}>
+      <Paper elevation={2} sx={{ p: 3, mt: 4 }}>
         <Typography variant="h6" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
           🚀 Quick Actions
         </Typography>

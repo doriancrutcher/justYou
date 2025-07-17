@@ -333,7 +333,7 @@ const Home: React.FC = () => {
                 backgroundColor: 'white',
                 color: '#667eea',
                 '&:hover': {
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: 'action.hover',
                   transform: 'translateY(-2px)',
                   boxShadow: '0 8px 25px rgba(0,0,0,0.2)'
                 },
@@ -353,7 +353,7 @@ const Home: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Daily Rules Section */}
-      <Paper elevation={2} sx={{ p: 3, mb: 4, backgroundColor: '#f8f9fa' }}>
+      <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h5" component="h2" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
           📋 Daily Rules to Live By
         </Typography>
@@ -435,7 +435,7 @@ const Home: React.FC = () => {
 
                   {/* Book Recommendation */}
                   {rule.book && (
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2, p: 2, backgroundColor: '#f0f8ff', borderRadius: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
                       <BookIcon sx={{ color: '#1976d2', fontSize: 20, mt: 0.5 }} />
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: '#1976d2' }}>
@@ -461,8 +461,8 @@ const Home: React.FC = () => {
                           clickable={false}
                           size="small"
                           sx={{ 
-                            backgroundColor: '#e3f2fd',
-                            color: '#1976d2',
+                            backgroundColor: 'primary.light',
+                            color: 'primary.main',
                             fontWeight: 500,
                             fontSize: '0.75rem'
                           }}

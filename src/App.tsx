@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -15,26 +15,8 @@ import QuizGenerator from './pages/QuizGenerator';
 import Resources from './pages/Resources';
 import StoriesPage from './pages/StoriesPage';
 import { AuthProvider } from './components/AuthContext';
+import { ThemeProvider, useTheme } from './components/ThemeContext';
 import { Analytics } from './mixpanel';
-
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontSize: '2.5rem',
-      fontWeight: 500,
-    },
-  },
-});
 
 // Component to track page views
 const PageTracker: React.FC = () => {
@@ -58,9 +40,11 @@ const PageTracker: React.FC = () => {
   return null;
 };
 
-function App() {
+const AppContent: React.FC = () => {
+  const { theme } = useTheme();
+
   return (
-    <ThemeProvider theme={theme}>
+    <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
         <Router>
@@ -81,6 +65,14 @@ function App() {
           </Routes>
         </Router>
       </AuthProvider>
+    </MuiThemeProvider>
+  );
+};
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
     </ThemeProvider>
   );
 }

@@ -172,7 +172,7 @@ Please provide only the modified objective without any explanations.`;
               <Typography variant="body1" sx={{ 
                 whiteSpace: 'pre-wrap', 
                 lineHeight: 1.6,
-                backgroundColor: '#f8f9fa',
+                backgroundColor: 'action.hover',
                 p: 2,
                 borderRadius: 1,
                 border: '1px solid #e9ecef'

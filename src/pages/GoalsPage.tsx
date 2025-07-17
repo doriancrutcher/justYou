@@ -508,7 +508,7 @@ const GoalsPage: React.FC = () => {
         </Box>
       )}
       
-      <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+      <Box sx={{ mt: 3, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
         <Typography variant="body2" color="text.secondary">
           💡 <strong>Tip:</strong> Drag and drop categories and goals to reorder them.
         </Typography>

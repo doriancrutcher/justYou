@@ -486,7 +486,7 @@ ${notes}`;
             Quiz Results
           </Typography>
           
-          <Box sx={{ mb: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
+          <Box sx={{ mb: 3, p: 2, backgroundColor: 'action.hover', borderRadius: 2 }}>
             <Typography variant="h6" gutterBottom>
               Overall Score
             </Typography>
