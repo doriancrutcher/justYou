@@ -29,7 +29,6 @@ interface GoalCategory {
 }
 
 const GoalsPage: React.FC = () => {
-  console.log('GoalsPage component rendering');
   const { user, signInWithGoogle } = useAuth();
   const [categories, setCategories] = useState<GoalCategory[]>([]);
   const [newCategory, setNewCategory] = useState('');
@@ -47,37 +46,26 @@ const GoalsPage: React.FC = () => {
 
   // Fetch categories from Firestore - only for authenticated user
   const fetchCategories = useCallback(async () => {
-    console.log('Fetching categories...');
-    console.log('User:', user);
-    console.log('Firebase db object:', db);
-    
     if (!user) {
-      console.log('No user found, setting empty categories');
       setCategories([]);
       return;
     }
 
     setLoading(true);
     try {
-      console.log('Querying Firestore for user:', user.uid);
       // Query goals for the current user only
       const goalsQuery = query(
         collection(db, 'goals'),
         where('userId', '==', user.uid)
       );
-      console.log('Goals query created:', goalsQuery);
       const querySnapshot = await getDocs(goalsQuery);
-      console.log('Query snapshot size:', querySnapshot.size);
       
       const cats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GoalCategory[];
-      console.log('Raw categories from Firestore:', cats);
       
       // Sort by order if it exists, otherwise by creation time
       const sortedCats = cats.sort((a, b) => (a.order || 0) - (b.order || 0));
-      console.log('Sorted categories:', sortedCats);
       
       setCategories(sortedCats);
-      console.log('Categories set in state');
       
       // Track successful fetch
       Analytics.trackGoalEvent('Fetch Categories', 'Success', {
@@ -86,43 +74,26 @@ const GoalsPage: React.FC = () => {
       });
     } catch (error) {
       console.error('Error fetching goals:', error);
-      console.error('Error details:', error);
       Analytics.trackError('Fetch Goals Error', {
         error: error instanceof Error ? error.message : 'Unknown error',
         userId: user?.uid
       });
     } finally {
       setLoading(false);
-      console.log('Loading set to false');
     }
   }, [user]);
 
   useEffect(() => {
-    console.log('GoalsPage useEffect triggered');
-    console.log('User state:', user);
-    console.log('fetchCategories function:', fetchCategories);
     fetchCategories();
   }, [fetchCategories]); // Re-fetch when user changes
 
   // Add new category - only for authenticated users
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Add Category button pressed!');
-    console.log('User:', user);
-    console.log('New category text:', newCategory);
     
-    if (!user) {
-      console.log('No user found - authentication required');
-      return;
-    }
-    
-    if (!newCategory.trim()) {
-      console.log('No category text entered');
-      return;
-    }
+    if (!user || !newCategory.trim()) return;
     
     try {
-      console.log('Creating new category...');
       const newCat: GoalCategory = {
         id: uuidv4(),
         category: newCategory,
@@ -131,16 +102,10 @@ const GoalsPage: React.FC = () => {
         order: categories.length,
         userId: user.uid, // Tie to current user
       };
-      console.log('New category object:', newCat);
       
-      console.log('Saving to Firestore...');
       await setDoc(doc(db, 'goals', newCat.id), newCat);
-      console.log('Successfully saved to Firestore');
-      
-      console.log('Updating local state...');
       setCategories([...categories, newCat]);
       setNewCategory('');
-      console.log('Local state updated successfully');
       
       // Track category creation
       Analytics.trackGoalEvent('Create Category', 'Category', {
@@ -160,52 +125,26 @@ const GoalsPage: React.FC = () => {
 
   // Add new task - only for authenticated users
   const handleAddTask = async (catId: string) => {
-    console.log('Add Goal button pressed!');
-    console.log('Category ID:', catId);
-    console.log('User:', user);
-    
-    if (!user) {
-      console.log('No user found - authentication required');
-      return;
-    }
+    if (!user) return;
     
     const text = newTask[catId]?.trim();
-    console.log('Task text:', text);
-    
-    if (!text) {
-      console.log('No task text entered');
-      return;
-    }
+    if (!text) return;
     
     const cat = categories.find(c => c.id === catId);
-    console.log('Found category:', cat);
-    
-    if (!cat) {
-      console.log('Category not found');
-      return;
-    }
+    if (!cat) return;
     
     try {
-      console.log('Creating new task...');
       const newTaskItem: Task = { 
         id: uuidv4(), 
         text, 
         completed: false, 
         order: cat.tasks.length 
       };
-      console.log('New task object:', newTaskItem);
       
       const updatedTasks = [...cat.tasks, newTaskItem];
-      console.log('Updated tasks array:', updatedTasks);
-      
-      console.log('Saving to Firestore...');
       await updateDoc(doc(db, 'goals', catId), { tasks: updatedTasks });
-      console.log('Successfully saved to Firestore');
-      
-      console.log('Updating local state...');
       setCategories(categories.map(c => c.id === catId ? { ...c, tasks: updatedTasks } : c));
       setNewTask({ ...newTask, [catId]: '' });
-      console.log('Local state updated successfully');
       
       // Track task creation
       Analytics.trackGoalEvent('Create Task', 'Task', {
