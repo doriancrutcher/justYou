@@ -29,6 +29,7 @@ interface GoalCategory {
 }
 
 const GoalsPage: React.FC = () => {
+  console.log('GoalsPage component rendering');
   const { user, signInWithGoogle } = useAuth();
   const [categories, setCategories] = useState<GoalCategory[]>([]);
   const [newCategory, setNewCategory] = useState('');
@@ -48,6 +49,7 @@ const GoalsPage: React.FC = () => {
   const fetchCategories = useCallback(async () => {
     console.log('Fetching categories...');
     console.log('User:', user);
+    console.log('Firebase db object:', db);
     
     if (!user) {
       console.log('No user found, setting empty categories');
@@ -63,6 +65,7 @@ const GoalsPage: React.FC = () => {
         collection(db, 'goals'),
         where('userId', '==', user.uid)
       );
+      console.log('Goals query created:', goalsQuery);
       const querySnapshot = await getDocs(goalsQuery);
       console.log('Query snapshot size:', querySnapshot.size);
       
@@ -83,6 +86,7 @@ const GoalsPage: React.FC = () => {
       });
     } catch (error) {
       console.error('Error fetching goals:', error);
+      console.error('Error details:', error);
       Analytics.trackError('Fetch Goals Error', {
         error: error instanceof Error ? error.message : 'Unknown error',
         userId: user?.uid
@@ -94,6 +98,9 @@ const GoalsPage: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
+    console.log('GoalsPage useEffect triggered');
+    console.log('User state:', user);
+    console.log('fetchCategories function:', fetchCategories);
     fetchCategories();
   }, [fetchCategories]); // Re-fetch when user changes
 
