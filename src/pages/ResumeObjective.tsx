@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Container, 
   Typography, 
@@ -30,18 +30,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CardActions,
-  Grid,
-  Tabs,
-  Tab,
   Input,
-  FormHelperText,
   Stack,
   Badge,
   Tooltip
 } from '@mui/material';
 import { 
-  Add as AddIcon,
   Delete as DeleteIcon,
   ContentCopy as CopyIcon,
   ExpandMore as ExpandMoreIcon,
@@ -50,10 +44,7 @@ import {
   Psychology as PsychologyIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
   Upload as UploadIcon,
-  Download as DownloadIcon,
   Search as SearchIcon,
   Label as LabelIcon,
   Description as DescriptionIcon,
@@ -142,8 +133,7 @@ const ResumeOptimizer: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  // Tab state
-  const [activeTab, setActiveTab] = useState(0);
+
   
   // Jobs state
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -268,85 +258,7 @@ const ResumeOptimizer: React.FC = () => {
     }
   ];
 
-  // Template system
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  const [showTemplates, setShowTemplates] = useState(false);
 
-  // Upload templates - simplified for file naming
-  const uploadTemplates = [
-    {
-      id: 'general',
-      name: 'General Resume',
-      template: {
-        name: 'Resume_[COMPANY]_[DATE]_v[VERSION]',
-        description: 'General professional resume template.',
-        tags: 'general, professional',
-        targetRole: '',
-        targetCompany: '',
-        version: '1.0'
-      }
-    },
-    {
-      id: 'tech',
-      name: 'Technology',
-      template: {
-        name: 'Tech_Resume_[COMPANY]_[DATE]_v[VERSION]',
-        description: 'Technology-focused resume template.',
-        tags: 'tech, technology, software, development',
-        targetRole: '',
-        targetCompany: '',
-        version: '1.0'
-      }
-    },
-    {
-      id: 'business',
-      name: 'Business',
-      template: {
-        name: 'Business_Resume_[COMPANY]_[DATE]_v[VERSION]',
-        description: 'Business and management resume template.',
-        tags: 'business, management, strategy, leadership',
-        targetRole: '',
-        targetCompany: '',
-        version: '1.0'
-      }
-    },
-    {
-      id: 'creative',
-      name: 'Creative',
-      template: {
-        name: 'Creative_Resume_[COMPANY]_[DATE]_v[VERSION]',
-        description: 'Creative and design resume template.',
-        tags: 'creative, design, art, media',
-        targetRole: '',
-        targetCompany: '',
-        version: '1.0'
-      }
-    },
-    {
-      id: 'healthcare',
-      name: 'Healthcare',
-      template: {
-        name: 'Healthcare_Resume_[COMPANY]_[DATE]_v[VERSION]',
-        description: 'Healthcare and medical resume template.',
-        tags: 'healthcare, medical, nursing, clinical',
-        targetRole: '',
-        targetCompany: '',
-        version: '1.0'
-      }
-    },
-    {
-      id: 'education',
-      name: 'Education',
-      template: {
-        name: 'Education_Resume_[COMPANY]_[DATE]_v[VERSION]',
-        description: 'Education and teaching resume template.',
-        tags: 'education, teaching, academic, training',
-        targetRole: '',
-        targetCompany: '',
-        version: '1.0'
-      }
-    }
-  ];
 
   // Common companies for quick selection
   const commonCompanies = [
@@ -378,31 +290,7 @@ const ResumeOptimizer: React.FC = () => {
     'Operations Specialist', 'Research Analyst', 'Consultant'
   ];
 
-  // Auto-generate name from template
-  const generateResumeName = (template: any, company: string = '') => {
-    const today = new Date().toISOString().slice(0, 7).replace('-', '-');
-    const version = template.version || '1.0';
-    return template.name
-      .replace('[COMPANY]', company || 'Company')
-      .replace('[DATE]', today)
-      .replace('[VERSION]', version);
-  };
 
-  // Apply template
-  const applyTemplate = (templateId: string) => {
-    const template = uploadTemplates.find(t => t.id === templateId);
-    if (template) {
-      setNewResume({
-        name: generateResumeName(template.template),
-        description: template.template.description,
-        tags: template.template.tags,
-        targetRole: template.template.targetRole,
-        targetCompany: template.template.targetCompany,
-        version: template.template.version
-      });
-      setSelectedTemplate(templateId);
-    }
-  };
 
   // Auto-suggest name from file
   const autoSuggestName = (fileName: string) => {
@@ -467,23 +355,8 @@ const ResumeOptimizer: React.FC = () => {
   const [optimizedProjects, setOptimizedProjects] = useState<string>('');
   const [optimizedSkills, setOptimizedSkills] = useState<string>('');
 
-  // Edit/View states
-  const [editJob, setEditJob] = useState<Job | null>(null);
-  const [editProject, setEditProject] = useState<Project | null>(null);
-  const [editSkill, setEditSkill] = useState<Skill | null>(null);
-  const [viewJob, setViewJob] = useState<Job | null>(null);
-  const [viewProject, setViewProject] = useState<Project | null>(null);
-  const [viewSkill, setViewSkill] = useState<Skill | null>(null);
-  const [editResume, setEditResume] = useState<ResumeFile | null>(null);
-
   // Load data from Firebase
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     
     setIsLoadingData(true);
@@ -545,7 +418,24 @@ const ResumeOptimizer: React.FC = () => {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
+
+  // Edit/View states
+  const [editJob, setEditJob] = useState<Job | null>(null);
+  const [editProject, setEditProject] = useState<Project | null>(null);
+  const [editSkill, setEditSkill] = useState<Skill | null>(null);
+  const [viewJob, setViewJob] = useState<Job | null>(null);
+  const [viewProject, setViewProject] = useState<Project | null>(null);
+  const [viewSkill, setViewSkill] = useState<Skill | null>(null);
+  const [editResume, setEditResume] = useState<ResumeFile | null>(null);
+
+
 
   const addJob = async () => {
     if (!newJob.title || !newJob.company || !user) return;
