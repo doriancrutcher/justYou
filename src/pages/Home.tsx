@@ -29,6 +29,7 @@ import {
   Psychology as PsychologyIcon,
   AutoStories as AutoStoriesIcon
 } from '@mui/icons-material';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import { useAuth } from '../components/AuthContext';
 
 const Home: React.FC = () => {
@@ -571,7 +572,7 @@ const Home: React.FC = () => {
       <Box sx={{ mt: 8, pt: 4, borderTop: '1px solid #e0e0e0' }}>
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Have suggestions or want to connect?
+            Have suggestions or want to connect? Find me on LinkedIn!
           </Typography>
           <Link
             href="https://www.linkedin.com/in/dorian-crutcher/"
@@ -582,17 +583,17 @@ const Home: React.FC = () => {
               textDecoration: 'none', 
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 0.5,
+              gap: 1,
+              p: 1,
+              borderRadius: 1,
+              transition: 'all 0.2s ease',
               '&:hover': { 
-                textDecoration: 'underline',
-                opacity: 0.8
+                backgroundColor: 'action.hover',
+                transform: 'scale(1.05)'
               }
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Connect with the developer on LinkedIn 
-            </Typography>
-            <LinkIcon sx={{ fontSize: 16 }} />
+            <LinkedInIcon sx={{ fontSize: 32, color: '#0077b5' }} />
           </Link>
         </Box>
       </Box>

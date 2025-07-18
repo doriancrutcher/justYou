@@ -83,14 +83,42 @@ const Header: React.FC = () => {
       </List>
       <Divider />
       <Box sx={{ p: 2 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={signInWithGoogle}
-          sx={{ borderRadius: 2, textTransform: 'none', mb: 2 }}
-        >
-          Sign in with Google
-        </Button>
+        {user ? (
+          <>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, p: 1, borderRadius: 1, backgroundColor: 'action.hover' }}>
+              <Avatar 
+                alt={user.displayName || undefined} 
+                src={user.photoURL || undefined}
+                sx={{ width: 32, height: 32, mr: 2 }}
+              />
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                  {user.displayName || user.email}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {user.email}
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={signOutUser}
+              sx={{ borderRadius: 2, textTransform: 'none', mb: 2 }}
+            >
+              Sign Out
+            </Button>
+          </>
+        ) : (
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={signInWithGoogle}
+            sx={{ borderRadius: 2, textTransform: 'none', mb: 2 }}
+          >
+            Sign in with Google
+          </Button>
+        )}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="body2" color="text.secondary">
             Theme

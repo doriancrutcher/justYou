@@ -46,23 +46,35 @@ const GoalsPage: React.FC = () => {
 
   // Fetch categories from Firestore - only for authenticated user
   const fetchCategories = useCallback(async () => {
+    console.log('Fetching categories...');
+    console.log('User:', user);
+    
     if (!user) {
+      console.log('No user found, setting empty categories');
       setCategories([]);
       return;
     }
 
     setLoading(true);
     try {
+      console.log('Querying Firestore for user:', user.uid);
       // Query goals for the current user only
       const goalsQuery = query(
         collection(db, 'goals'),
         where('userId', '==', user.uid)
       );
       const querySnapshot = await getDocs(goalsQuery);
+      console.log('Query snapshot size:', querySnapshot.size);
+      
       const cats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GoalCategory[];
+      console.log('Raw categories from Firestore:', cats);
+      
       // Sort by order if it exists, otherwise by creation time
       const sortedCats = cats.sort((a, b) => (a.order || 0) - (b.order || 0));
+      console.log('Sorted categories:', sortedCats);
+      
       setCategories(sortedCats);
+      console.log('Categories set in state');
       
       // Track successful fetch
       Analytics.trackGoalEvent('Fetch Categories', 'Success', {
@@ -77,6 +89,7 @@ const GoalsPage: React.FC = () => {
       });
     } finally {
       setLoading(false);
+      console.log('Loading set to false');
     }
   }, [user]);
 
@@ -87,9 +100,22 @@ const GoalsPage: React.FC = () => {
   // Add new category - only for authenticated users
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !newCategory.trim()) return;
+    console.log('Add Category button pressed!');
+    console.log('User:', user);
+    console.log('New category text:', newCategory);
+    
+    if (!user) {
+      console.log('No user found - authentication required');
+      return;
+    }
+    
+    if (!newCategory.trim()) {
+      console.log('No category text entered');
+      return;
+    }
     
     try {
+      console.log('Creating new category...');
       const newCat: GoalCategory = {
         id: uuidv4(),
         category: newCategory,
@@ -98,9 +124,16 @@ const GoalsPage: React.FC = () => {
         order: categories.length,
         userId: user.uid, // Tie to current user
       };
+      console.log('New category object:', newCat);
+      
+      console.log('Saving to Firestore...');
       await setDoc(doc(db, 'goals', newCat.id), newCat);
+      console.log('Successfully saved to Firestore');
+      
+      console.log('Updating local state...');
       setCategories([...categories, newCat]);
       setNewCategory('');
+      console.log('Local state updated successfully');
       
       // Track category creation
       Analytics.trackGoalEvent('Create Category', 'Category', {
@@ -120,30 +153,63 @@ const GoalsPage: React.FC = () => {
 
   // Add new task - only for authenticated users
   const handleAddTask = async (catId: string) => {
-    if (!user) return;
+    console.log('Add Goal button pressed!');
+    console.log('Category ID:', catId);
+    console.log('User:', user);
+    
+    if (!user) {
+      console.log('No user found - authentication required');
+      return;
+    }
     
     const text = newTask[catId]?.trim();
-    if (!text) return;
-    const cat = categories.find(c => c.id === catId);
-    if (!cat) return;
-    const newTaskItem: Task = { 
-      id: uuidv4(), 
-      text, 
-      completed: false, 
-      order: cat.tasks.length 
-    };
-    const updatedTasks = [...cat.tasks, newTaskItem];
-    await updateDoc(doc(db, 'goals', catId), { tasks: updatedTasks });
-    setCategories(categories.map(c => c.id === catId ? { ...c, tasks: updatedTasks } : c));
-    setNewTask({ ...newTask, [catId]: '' });
+    console.log('Task text:', text);
     
-    // Track task creation
-    Analytics.trackGoalEvent('Create Task', 'Task', {
-      categoryName: cat.category,
-      taskText: text,
-      totalTasksInCategory: updatedTasks.length,
-      userId: user.uid
-    });
+    if (!text) {
+      console.log('No task text entered');
+      return;
+    }
+    
+    const cat = categories.find(c => c.id === catId);
+    console.log('Found category:', cat);
+    
+    if (!cat) {
+      console.log('Category not found');
+      return;
+    }
+    
+    try {
+      console.log('Creating new task...');
+      const newTaskItem: Task = { 
+        id: uuidv4(), 
+        text, 
+        completed: false, 
+        order: cat.tasks.length 
+      };
+      console.log('New task object:', newTaskItem);
+      
+      const updatedTasks = [...cat.tasks, newTaskItem];
+      console.log('Updated tasks array:', updatedTasks);
+      
+      console.log('Saving to Firestore...');
+      await updateDoc(doc(db, 'goals', catId), { tasks: updatedTasks });
+      console.log('Successfully saved to Firestore');
+      
+      console.log('Updating local state...');
+      setCategories(categories.map(c => c.id === catId ? { ...c, tasks: updatedTasks } : c));
+      setNewTask({ ...newTask, [catId]: '' });
+      console.log('Local state updated successfully');
+      
+      // Track task creation
+      Analytics.trackGoalEvent('Create Task', 'Task', {
+        categoryName: cat.category,
+        taskText: text,
+        totalTasksInCategory: updatedTasks.length,
+        userId: user.uid
+      });
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   };
 
   // Toggle task completion - only for authenticated users
@@ -383,9 +449,18 @@ const GoalsPage: React.FC = () => {
           fullWidth
           label="Add a new category"
           value={newCategory}
-          onChange={e => setNewCategory(e.target.value)}
+          onChange={e => {
+            console.log('Category input changed:', e.target.value);
+            setNewCategory(e.target.value);
+          }}
+          required
         />
-        <Button type="submit" variant="contained" sx={{ ml: { xs: 0, sm: 2 }, minWidth: { xs: '100%', sm: 'auto' } }}>
+        <Button 
+          type="submit" 
+          variant="contained" 
+          disabled={!newCategory.trim()}
+          sx={{ ml: { xs: 0, sm: 2 }, minWidth: { xs: '100%', sm: 'auto' } }}
+        >
           Add Category
         </Button>
       </Box>
@@ -465,9 +540,18 @@ const GoalsPage: React.FC = () => {
               fullWidth
               label="Add a new goal"
               value={newTask[cat.id] || ''}
-              onChange={e => setNewTask({ ...newTask, [cat.id]: e.target.value })}
+              onChange={e => {
+                console.log('Goal input changed for category', cat.id, ':', e.target.value);
+                setNewTask({ ...newTask, [cat.id]: e.target.value });
+              }}
+              required
             />
-            <Button variant="contained" sx={{ ml: { xs: 0, sm: 2 }, minWidth: { xs: '100%', sm: 'auto' } }} onClick={() => handleAddTask(cat.id)}>
+            <Button 
+              variant="contained" 
+              disabled={!newTask[cat.id]?.trim()}
+              sx={{ ml: { xs: 0, sm: 2 }, minWidth: { xs: '100%', sm: 'auto' } }} 
+              onClick={() => handleAddTask(cat.id)}
+            >
               Add Goal
             </Button>
           </Box>

@@ -7,7 +7,7 @@ A comprehensive career development and job search tracking application built wit
 - **AI-Powered Quiz Generator**: Create custom quizzes from your notes with difficulty levels
 - **Job Search Tracker**: Monitor your job search activities and time spent
 - **Goals Management**: Organize and track career goals with drag-and-drop reordering
-- **Resume Objective Optimizer**: Get AI-powered suggestions for resume objectives
+- **Resume Optimizer**: Get AI-powered suggestions for resume sections
 - **Story Management**: Create and manage professional stories for interviews
 - **Todo Lists**: Simple task management for career development
 - **Resources**: Curated learning materials and career resources
