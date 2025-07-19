@@ -14,8 +14,9 @@ import JobSearchTracker from './pages/JobSearchTracker';
 import QuizGenerator from './pages/QuizGenerator';
 import Resources from './pages/Resources';
 import StoriesPage from './pages/StoriesPage';
-import { AuthProvider } from './components/AuthContext';
+import { AuthProvider, useAuth } from './components/AuthContext';
 import { ThemeProvider, useTheme } from './components/ThemeContext';
+import LoadingScreen from './components/LoadingScreen';
 import { Analytics } from './mixpanel';
 
 // Component to track page views
@@ -47,25 +48,37 @@ const AppContent: React.FC = () => {
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <PageTracker />
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/stories" element={<StoriesPage />} />
-            <Route path="/create" element={<CreatePost />} />
-            <Route path="/post/:id" element={<ViewPost />} />
-            <Route path="/todos" element={<TodoList />} />
-            <Route path="/edit/:id" element={<EditPost />} />
-            <Route path="/goals" element={<GoalsPage />} />
-            <Route path="/resume" element={<ResumeObjective />} />
-            <Route path="/tracker" element={<JobSearchTracker />} />
-            <Route path="/quiz" element={<QuizGenerator />} />
-            <Route path="/resources" element={<Resources />} />
-          </Routes>
-        </Router>
+        <AppWithAuth />
       </AuthProvider>
     </MuiThemeProvider>
+  );
+};
+
+const AppWithAuth: React.FC = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Router>
+      <PageTracker />
+      <Header />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/stories" element={<StoriesPage />} />
+        <Route path="/create" element={<CreatePost />} />
+        <Route path="/post/:id" element={<ViewPost />} />
+        <Route path="/todos" element={<TodoList />} />
+        <Route path="/edit/:id" element={<EditPost />} />
+        <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/resume" element={<ResumeObjective />} />
+        <Route path="/tracker" element={<JobSearchTracker />} />
+        <Route path="/quiz" element={<QuizGenerator />} />
+        <Route path="/resources" element={<Resources />} />
+      </Routes>
+    </Router>
   );
 };
 
